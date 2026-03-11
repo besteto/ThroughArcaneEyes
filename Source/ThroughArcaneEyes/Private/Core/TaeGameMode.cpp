@@ -7,7 +7,7 @@
 
 ATaeGameMode::ATaeGameMode()
 {
-	GameStateClass  = ATaeGameState::StaticClass();
-	HUDClass        = ATaeHud::StaticClass();
+	GameStateClass   = ATaeGameState::StaticClass();
+	HUDClass         = ATaeHud::StaticClass();
 	DefaultPawnClass = ATaeCharacter::StaticClass();
 }
