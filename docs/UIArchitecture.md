@@ -1,6 +1,6 @@
 # UI Architecture — Through Arcane Eyes
 
-> Day 4 deliverable. Nothing in this file is implemented yet.
+> Day 4 deliverable. Nothing in this file is implemented yet. For coding conventions and patterns see [AGENTS.md](../AGENTS.md)
 
 ## Principles
 

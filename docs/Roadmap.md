@@ -1,5 +1,7 @@
 # Development Roadmap — Through Arcane Eyes
 
+> For coding conventions and patterns see [AGENTS.md](../AGENTS.md)
+
 5-day sprint to a complete portfolio vertical slice.
 
 | Day | Focus | Deliverable | Status |

@@ -1,5 +1,7 @@
 # System Architecture — Through Arcane Eyes
 
+> For coding conventions and patterns see [AGENTS.md](../AGENTS.md)
+
 ## Class Hierarchy
 
 ```

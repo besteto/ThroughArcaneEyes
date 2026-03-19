@@ -1,6 +1,6 @@
 # Spectral Vision System
 
-> Day 2 deliverable. Nothing in this file is implemented yet.
+> Day 2 deliverable. Nothing in this file is implemented yet. For coding conventions and patterns see [AGENTS.md](../AGENTS.md)
 
 ## Concept
 
