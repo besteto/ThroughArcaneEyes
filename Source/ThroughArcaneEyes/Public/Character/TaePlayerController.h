@@ -25,10 +25,13 @@ protected:
 	TObjectPtr<UInputAction> MoveAction;
 
 	UPROPERTY(EditAnywhere, Category = "Tae")
+	TObjectPtr<UInputAction> JumpAction;
+
+	UPROPERTY(EditAnywhere, Category = "Tae")
 	TObjectPtr<UInputAction> LookAction;
 
 	UPROPERTY(EditAnywhere, Category = "Tae")
-	TObjectPtr<UInputAction> JumpAction;
+	TObjectPtr<UInputAction> ToggleEyesAction;
 
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -38,6 +41,8 @@ protected:
 	void DoLook(IA_t Action);
 	void DoJump(IA_t Action);
 	void DoStopJumping(IA_t Action);
+
+	void DoToggleEyes(IA_t Action);
 
 private:
 	UPROPERTY(Transient)
