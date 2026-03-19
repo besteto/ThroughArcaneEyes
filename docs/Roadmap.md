@@ -6,7 +6,7 @@
 
 | Day | Focus | Deliverable | Status |
 |-----|-------|-------------|--------|
-| Day 1 | Core Framework | C++ Character/Controller + Enhanced Input | 🟡 In Progress |
+| Day 1 | Core Framework | C++ Character/Controller + Enhanced Input | ✅ Done |
 | Day 2 | Spectral Shaders | Post-Process Material + C++ Toggle Logic | ⬜ Not started |
 | Day 3 | Grid & Interaction | `AGridCube` + hidden/solid state logic | ⬜ Not started |
 | Day 4 | Data-Driven UI | MVVM Viewmodel + Common UI HUD | ⬜ Not started |
@@ -14,32 +14,21 @@
 
 ---
 
-## Day 1 — Core Framework
+## Day 1 — Core Framework ✅
 
 **Goal:** Playable character in-editor with all input wired end-to-end.
 
-### C++
-- [x] `ATaeCharacter` — first-person camera, root attachment, eye height (Z=60)
-- [x] `ATaePlayerController` — Enhanced Input: Move/Look/Jump bound; `OwnerCharacter` cached via `SetPawn()`
-- [x] `ATaeGameMode` — registers GameState / HUD / Character / PlayerController in ctor
-- [x] `ATaeGameState`, `UTaeGameInstance`, `ATaeHud` — scaffolded
-- [ ] `UTaeInputConfig` Data Asset class — holds `TObjectPtr<UInputAction>` refs; eliminates hardcoded string lookups
-- [ ] Arcane layer `UInputMappingContext` — push/pop via `UEnhancedInputLocalPlayerSubsystem` on Spectral Shift activation
+- [x] C++ framework classes — `ATaeCharacter`, `ATaePlayerController`, `ATaeGameMode` (`AGameMode`), `ATaeGameState`, `UTaeGameInstance`, `ATaeHud`
+- [x] Enhanced Input — Move / Look / Jump / `DoToggleEyes` stub bound in controller; WASD Swizzle/Negate modifiers correct
+- [x] `LogTae` project log category; null-guard warnings on all BP-assigned properties
+- [x] Blueprint parenting — `BP_TaeGameMode`, `BP_Hero`, `BP_TaePlayerController` created with correct parents
+- [x] Input assets — `IMC_Default`, `IA_MoveInputAction`, `IA_LookInputAction`, `IA_JumpInputAction`
+- [x] Config — `GlobalDefaultGameMode` and Enhanced Input component class set
 
-### Editor / Blueprints
-- [ ] `Content/Core/BP_TaeGameMode` → parent `ATaeGameMode`
-- [ ] `Content/Core/BP_TaeGameState` → parent `ATaeGameState`
-- [ ] `Content/Core/BP_TaeHud` → parent `ATaeHud`; assign `MainWidgetClass`
-- [ ] `Content/Core/BP_TaeGameInstance` → parent `UTaeGameInstance`
-- [ ] `Content/Character/BP_Hero` → parent `ATaeCharacter`
-- [ ] `Content/Character/BP_TaePlayerController` → parent `ATaePlayerController`; assign `DefaultMappingContext`, `MoveAction`, `LookAction`, `JumpAction`
-- [ ] `Content/Character/IMC_Default` Input Mapping Context asset
-- [ ] `Content/Character/IA_Move`, `IA_Look`, `IA_Jump` Input Action assets
-
-### Config
-- [x] `DefaultGame.ini` — `GlobalDefaultGameMode` → `BP_TaeGameMode_C`
-- [x] `DefaultInput.ini` — `EnhancedPlayerInput` + `EnhancedInputComponent` set
-- [ ] Update `DefaultGame.ini` `GameInstanceClass` → `BP_TaeGameInstance_C` once BP is created
+**Remaining loose ends before Day 2:**
+- [ ] `IA_ToggleEyesAction` asset — create and assign in `BP_TaePlayerController`
+- [ ] `BP_TaeGameState`, `BP_TaeHud` (assign `MainWidgetClass`), `BP_TaeGameInstance` — not strictly required to play but needed before Day 4
+- [ ] `DefaultGame.ini` `GameInstanceClass` → `BP_TaeGameInstance_C` once BP is created
 
 ---
 
@@ -49,8 +38,7 @@
 
 ### C++
 - [ ] `UTaeStateComponent` — `UActorComponent` that owns a `FGameplayTagContainer`; broadcasts an `OnStateChanged` delegate
-- [ ] `ATaeCharacter` or controller — input binding for `IA_SpectralShift` on the Arcane `UInputMappingContext`
-- [ ] Spectral Shift logic — pushes/pops Arcane mapping context; fires `OnStateChanged` tag event
+- [ ] `DoToggleEyes` in `ATaePlayerController` — implement push/pop of Arcane `UInputMappingContext` via `UEnhancedInputLocalPlayerSubsystem`; fires `OnStateChanged` tag event
 
 ### Materials / Rendering
 - [ ] Post-Process Material `M_SpectralEdge` — Sobel-edge detection algorithm

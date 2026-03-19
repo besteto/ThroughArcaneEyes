@@ -34,7 +34,7 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full 5-day plan and per-day c
 
 | Day | Focus | Status |
 |-----|-------|--------|
-| Day 1 | Core Framework | 🟡 In Progress |
+| Day 1 | Core Framework | ✅ Done |
 | Day 2 | Spectral Shaders | ⬜ Not started |
 | Day 3 | Grid & Interaction | ⬜ Not started |
 | Day 4 | Data-Driven UI | ⬜ Not started |
