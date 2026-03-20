@@ -7,7 +7,9 @@ The project features a procedural cube-grid environment where the core gameplay 
 * Engine: Unreal Engine 5.7 (C++ 20)
 * Input: Enhanced Input System (Modular Mapping Contexts)
 * UI Architecture: Common UI (Input Routing) + UMG Viewmodel (Data Binding)
-* Rendering: Post-Process Materials, Global Distance Fields, Stencil Buffers
+* Rendering: Post-Process Materials, Global Distance Fields, Stencil Buffers, Substrate Materials
+* Gameplay: GAS (Gameplay Ability System) — Arcane toggle, Mana attribute, Gameplay Tags
+* Animation: Motion Matching (PoseSearch) — realistic locomotion + Arcane float mode
 * World Gen: PCG (Procedural Content Generation) Framework + C++ Grid Actors
 * Workflow: Git (GitHub Actions for CI/CD), Obsidian (Knowledge Management)
 
@@ -30,15 +32,23 @@ The HUD does not use Tick or standard Event Construct binding.
 
 # 📅 Development Roadmap
 
-See **[docs/Roadmap.md](docs/Roadmap.md)** for the full 5-day plan and per-day checklists.
+See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checklists.
+
+**Sprint 1 — Core Vertical Slice**
 
 | Day | Focus | Status |
 |-----|-------|--------|
 | Day 1 | Core Framework | ✅ Done |
-| Day 2 | Spectral Shaders | ⬜ Not started |
+| Day 2 | GAS + Spectral Shaders | ⬜ Not started |
 | Day 3 | Grid & Interaction | ⬜ Not started |
 | Day 4 | Data-Driven UI | ⬜ Not started |
 | Day 5 | Portal & Polish | ⬜ Not started |
+
+**Sprint 2 — Enhancement** *(optional)*
+
+| Day | Focus | Status |
+|-----|-------|--------|
+| Day 6 | Animation (Motion Matching) | ⬜ Not started |
 
 # 📚 Docs
 

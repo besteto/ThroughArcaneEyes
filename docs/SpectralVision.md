@@ -63,12 +63,21 @@ private:
 
 ## ATaeGridCube State Logic
 
+Two Substrate materials are swapped on state change — no dynamic parameters.
+
+| State | Material | Substrate slab |
+|-------|----------|----------------|
+| Default | `M_GridCube_Forest` | Opaque — organic greens and rock tones |
+| Arcane active | `M_GridCube_Arcane` | Translucent — emissive glow layer |
+
 ```
 OnStateChanged(Tag):
   if Tag == GameplayTag.Arcane.Vision && Actor has GameplayTag.Arcane.Hidden:
-    SetActorHiddenInGame(false)
+    MeshComponent->SetMaterial(0, ArcaneMateria)
     MeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics)
   else:
-    SetActorHiddenInGame(true)
+    MeshComponent->SetMaterial(0, ForestMaterial)
     MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision)
 ```
+
+`ForestMaterial` and `ArcaneMateria` are `EditDefaultsOnly TObjectPtr<UMaterialInterface>` properties on `ATaeGridCube`, assigned in `BP_GridCube`.
