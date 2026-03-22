@@ -11,9 +11,13 @@ Guidance for AI agents working in this UE 5.7 first-person puzzle game.
 
 Single game module: `ThroughArcaneEyes` (Runtime, `UseExplicitOrSharedPCHs`).
 
-**Build.cs public dependencies:** `Core, CoreUObject, Engine, InputCore, EnhancedInput, UMG`
+**Build.cs public dependencies (grouped):**
+- Engine core: `Core, CoreUObject, Engine, InputCore`
+- Input: `EnhancedInput`
+- UI: `UMG, CommonUI`
+- GAS: `GameplayAbilities, GameplayTags, GameplayTasks`
 
-No custom plugins. Engine plugin in use: `ModelingToolsEditorMode` (editor-only).
+No custom plugins. Engine plugins in use: `ModelingToolsEditorMode` (editor-only), `GameplayAbilities`, `CommonUI`.
 
 Targets: `ThroughArcaneEyes.Target.cs` (Game) and `ThroughArcaneEyesEditor.Target.cs` (Editor), both `BuildSettingsVersion.V6` / `IncludeOrderVersion.Unreal5_7`.
 
@@ -31,6 +35,8 @@ Targets: `ThroughArcaneEyes.Target.cs` (Game) and `ThroughArcaneEyesEditor.Targe
 | Class prefix alias | `ThisClass` | used in `BindAction` callbacks |
 
 Source mirrors header layout: `Public/<Domain>/TaeX.h` → `Private/<Domain>/TaeX.cpp`.
+
+Current domains: `Core/`, `Character/`, `Data/`, `UI/`, `GAS/`, `Components/`.
 
 ---
 
@@ -56,14 +62,12 @@ Forward-declare in headers, include in `.cpp`. Full specifier guide in [CONTRIBU
 Input is handled exclusively in `ATaePlayerController` — **not** in `ATaeCharacter`.
 
 ```cpp
-// TaePlayerController.h — typedef used for all binding callbacks
-using IA_t = const struct FInputActionInstance&;
-
-void DoMove(IA_t Action);         // ETriggerEvent::Triggered
-void DoLook(IA_t Action);         // ETriggerEvent::Triggered
-void DoJump(IA_t Action);         // ETriggerEvent::Started
-void DoStopJumping(IA_t Action);  // ETriggerEvent::Completed
-void DoSpectralShift(IA_t Action); // ETriggerEvent::Started — activates UGA_ArcaneShift (Day 2)
+// TaePlayerController.h — all handlers use const FInputActionInstance& directly
+void DoMove(const FInputActionInstance& Action);         // ETriggerEvent::Triggered
+void DoLook(const FInputActionInstance& Action);         // ETriggerEvent::Triggered
+void DoJump(const FInputActionInstance& Action);         // ETriggerEvent::Started
+void DoStopJumping(const FInputActionInstance& Action);  // ETriggerEvent::Completed
+void DoSpectralShift(const FInputActionInstance& Action); // ETriggerEvent::Started — toggles UGA_SpectralShift
 ```
 
 Actions are `EditAnywhere TObjectPtr<UInputAction>` properties on the controller; assigned in `BP_TaePlayerController` Details > Tae.
@@ -93,9 +97,10 @@ No `BlueprintNativeEvent` or `BlueprintImplementableEvent` is used yet. Current 
 
 - C++ classes are the **parents** of all Blueprints (`BP_TaeGameMode`, `BP_Hero`, etc.)
 - Blueprint-assignable config uses `TSubclassOf<T>` or `TObjectPtr<T>` with `EditDefaultsOnly`/`EditAnywhere`
-- `ATaeHud::MainWidgetClass` is set in `BP_HUD`; the C++ `BeginPlay` creates and adds the widget
+- `ATaeHud::MainMenuClass` (`TSubclassOf<UTaeMainMenuWidget>`) is set in `BP_TaeHud`; `BeginPlay` creates, `AddToPlayerScreen`, and `ActivateWidget`
+- `BP_TaeGameMode` Class Defaults own all framework class slots (`GameStateClass`, `HUDClass`, etc.) — the C++ constructor sets nothing
 
-No delegates are defined yet. When adding delegates, follow UE5 `DECLARE_DYNAMIC_MULTICAST_DELEGATE` convention and expose via `BlueprintAssignable`.
+Delegates in use: `FOnArcaneStateChanged` on `UTaeStateComponent` (`DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam`, `BlueprintAssignable`). Follow this pattern for all future delegates.
 
 ---
 
@@ -112,16 +117,43 @@ No delegates are defined yet. When adding delegates, follow UE5 `DECLARE_DYNAMIC
 
 `ATaeGameMode` extends `AGameMode` (not `AGameModeBase`) — required because `ATaeGameState` extends `AGameState`. Mixing these is a hard error at PIE startup.
 
-Constructor sets all four class slots:
+All four class slots (`GameStateClass`, `HUDClass`, `DefaultPawnClass`, `PlayerControllerClass`) are set in **`BP_TaeGameMode` Class Defaults**, not in C++. The C++ constructor is empty.
 
-```cpp
-GameStateClass        = ATaeGameState::StaticClass();
-HUDClass              = ATaeHud::StaticClass();
-DefaultPawnClass      = ATaeCharacter::StaticClass();
-PlayerControllerClass = ATaePlayerController::StaticClass();
+`DefaultEngine.ini` `[GameMapsSettings]` points `GlobalDefaultGameMode` to `BP_TaeGameMode_C` and `GameInstanceClass` to `BP_TaeGameInstance_C`.
+
+---
+
+## GAS Conventions
+
+`ATaeCharacter` owns the `UAbilitySystemComponent` and `UTaeManaAttributeSet` (both created as subobjects in the constructor). `InitAbilityActorInfo(this, this)` and `GiveAbility` are called in `BeginPlay`.
+
+**Naming split — Shift vs Vision:**
+- *Shift* = the action → `GA_SpectralShift`, `DoSpectralShift`, `IA_SpectralShift`
+- *Vision* = the resulting state → `Arcane.Vision` tag, `IMC_Arcane`
+- Future shifts (e.g. `GA_EternalShift`) also grant `Arcane.Vision` ± extra tags on top.
+
+**Toggle pattern in `ATaePlayerController::DoSpectralShift`:**
+Check `Arcane.Vision` tag → if present: `FindAbilitySpecFromClass` + `CancelAbility`; if absent: `TryActivateAbilityByClass`.
+
+**Attribute sets:** add new `UAttributeSet` subclasses to `Public/GAS/`. Include `GAS/TaeGASTypes.h` for the `ATTRIBUTE_ACCESSORS` macro — never redefine it.
+
+**`UTaeStateComponent`:** add to any actor that needs to react to `Arcane.Vision`. It registers the tag event in `BeginPlay` and broadcasts `OnArcaneStateChanged(bool)`.
+
+---
+
+## Editor Validation
+
+Prefer `IsDataValid` (guarded by `#if WITH_EDITOR`) over runtime `UE_LOG` null-guards for BP-assigned properties. Include `Misc/DataValidation.h` in the `.cpp`. Use `Context.AddError` (not `AddWarning`) for properties that make the class non-functional when unset.
+
+---
+
+## Copyright
+
+All source files use:
 ```
-
-`DefaultGame.ini` points `GlobalDefaultGameMode` to `BP_TaeGameMode_C`. When adding new GameMode features, edit the C++ class — the BP inherits them automatically.
+// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
+```
+License: Source Available — code is public for portfolio/study only; no redistribution or commercial use. See `LICENSE` in the repo root.
 
 ---
 

@@ -42,21 +42,11 @@
 
 **Before starting — loose ends from Day 1:** ✅ All clear
 
-### GAS Foundation (C++)
-- [x] Add `GameplayAbilities`, `GameplayTags`, `GameplayTasks` to `Build.cs` public deps
-- [x] `UAbilitySystemComponent` added to `ATaeCharacter`; implement `IAbilitySystemInterface`
-- [x] `UTaeManaAttributeSet` — `Mana` + `MaxMana` attributes, clamped; shared `ATTRIBUTE_ACCESSORS` macro in `TaeGASTypes.h`; feeds Day 4 ViewModel directly
-- [x] `UGA_SpectralShift` — grants/removes `Arcane.Vision` tag, pushes/pops `IMC_Arcane`; `InstancedPerActor`
-- [x] `Arcane.Vision` tag registered in `Config/DefaultGameplayTags.ini`
-- [x] `DoSpectralShift` in `ATaePlayerController` — toggles via tag check + `FindAbilitySpecFromClass` / `CancelAbility`
+**C++ complete** — GAS deps, ASC + `UTaeManaAttributeSet` + `UGA_SpectralShift` + `UTaeStateComponent` all done; `Arcane.Vision` tag confirmed working in PIE.
 
-### State Propagation (C++)
-- [x] `UTaeStateComponent` — `UActorComponent`; registers `RegisterGameplayTagEvent(Arcane.Vision)`, broadcasts `OnArcaneStateChanged`
-
-### Materials / Rendering
-- [ ] Post-Process Material `M_SpectralEdge` — Sobel-edge detection algorithm
-- [x] Custom Depth Stencil — `r.CustomDepth=3` set in `DefaultEngine.ini`; convention: `1` = hidden geometry, `2` = portal
-- [ ] `BP_SpectralVolume` — Post-Process Volume enabled/disabled by `UGA_SpectralShift`
+### Materials / Rendering (remaining)
+- [ ] Post-Process Material `M_SpectralEdge` — Sobel-edge detection on Custom Depth (`r.CustomDepth=3` already set)
+- [ ] `BP_SpectralVolume` — Post-Process Volume; `BP_GA_SpectralShift` enables/disables it; assign `IMC_Arcane`
 
 ---
 
