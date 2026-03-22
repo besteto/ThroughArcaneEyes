@@ -39,7 +39,7 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checkli
 | Day | Focus | Status |
 |-----|-------|--------|
 | Day 1 | Core Framework | ✅ Done |
-| Day 2 | GAS + Spectral Shaders | ⬜ Not started |
+| Day 2 | GAS + Spectral Shaders | 🔄 In Progress (C++ done, materials remaining) |
 | Day 3 | Grid & Interaction | ⬜ Not started |
 | Day 4 | Data-Driven UI | ⬜ Not started |
 | Day 5 | Portal & Polish | ⬜ Not started |
@@ -69,3 +69,9 @@ Note to Recruiters: This project prioritizes Code Scalability. Instead of using 
 * Right-click ThroughArcaneEyes.uproject -> Generate Visual Studio project files.
 * Build the solution in Development Editor configuration.
 * Play in Editor (PIE).
+
+# 📄 License
+Copyright © 2026 Helen Allien Poe. **Source Available** — see [LICENSE](LICENSE).
+
+The source code is public for portfolio and educational viewing only.
+Redistribution, commercial use, or inclusion in other projects is not permitted.

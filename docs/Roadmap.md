@@ -38,25 +38,25 @@
 
 ## Day 2 — GAS + Spectral Shaders
 
-**Goal:** GAS drives the Arcane toggle; pressing a key activates `GA_ArcaneShift`, grants the vision tag, and triggers the post-process pass.
+**Goal:** GAS drives the Arcane toggle; pressing a key activates `GA_SpectralShift`, grants `Arcane.Vision` tag, and triggers the post-process pass.
 
 **Before starting — loose ends from Day 1:** ✅ All clear
 
 ### GAS Foundation (C++)
-- [ ] Add `GameplayAbilities`, `GameplayTags`, `GameplayTasks` to `Build.cs` public deps
-- [ ] `UAbilitySystemComponent` added to `ATaeCharacter`; implement `IAbilitySystemInterface`
-- [ ] `UTaeManaAttributeSet` — `UAttributeSet` with `Mana` attribute; feeds Day 4 ViewModel directly
-- [ ] `UGA_ArcaneShift` — `UGameplayAbility` subclass; grants/removes `GameplayTag.Arcane.Vision`, pushes/pops `IMC_Arcane` via `UEnhancedInputLocalPlayerSubsystem`
-- [ ] `GameplayTag.Arcane.Vision` registered in `Config/DefaultGameplayTags.ini`
-- [ ] `DoSpectralShift` in `ATaePlayerController` — calls `TryActivateAbilityByClass(UGA_ArcaneShift)` instead of toggling directly
+- [x] Add `GameplayAbilities`, `GameplayTags`, `GameplayTasks` to `Build.cs` public deps
+- [x] `UAbilitySystemComponent` added to `ATaeCharacter`; implement `IAbilitySystemInterface`
+- [x] `UTaeManaAttributeSet` — `Mana` + `MaxMana` attributes, clamped; shared `ATTRIBUTE_ACCESSORS` macro in `TaeGASTypes.h`; feeds Day 4 ViewModel directly
+- [x] `UGA_SpectralShift` — grants/removes `Arcane.Vision` tag, pushes/pops `IMC_Arcane`; `InstancedPerActor`
+- [x] `Arcane.Vision` tag registered in `Config/DefaultGameplayTags.ini`
+- [x] `DoSpectralShift` in `ATaePlayerController` — toggles via tag check + `FindAbilitySpecFromClass` / `CancelAbility`
 
 ### State Propagation (C++)
-- [ ] `UTaeStateComponent` — lightweight `UActorComponent` on level actors (e.g. `ATaeGridCube`); listens to ASC tag changes via `RegisterGameplayTagEvent` and broadcasts `OnStateChanged`
+- [x] `UTaeStateComponent` — `UActorComponent`; registers `RegisterGameplayTagEvent(Arcane.Vision)`, broadcasts `OnArcaneStateChanged`
 
 ### Materials / Rendering
 - [ ] Post-Process Material `M_SpectralEdge` — Sobel-edge detection algorithm
-- [ ] Custom Depth Stencil value convention (`1` = hidden geometry, `2` = portal); set `r.CustomDepth=3` in `DefaultEngine.ini`
-- [ ] `BP_SpectralVolume` — Post-Process Volume enabled/disabled by `UGA_ArcaneShift`
+- [x] Custom Depth Stencil — `r.CustomDepth=3` set in `DefaultEngine.ini`; convention: `1` = hidden geometry, `2` = portal
+- [ ] `BP_SpectralVolume` — Post-Process Volume enabled/disabled by `UGA_SpectralShift`
 
 ---
 

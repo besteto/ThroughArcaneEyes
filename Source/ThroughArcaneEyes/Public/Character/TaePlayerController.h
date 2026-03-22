@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
 
 #pragma once
 

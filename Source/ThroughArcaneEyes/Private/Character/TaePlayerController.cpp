@@ -1,10 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
 
 #include "Character/TaePlayerController.h"
 #include "ThroughArcaneEyes.h"
 #include "Character/TaeCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "AbilitySystemComponent.h"
+#include "GAS/GA_SpectralShift.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -86,6 +88,26 @@ void ATaePlayerController::DoLook(const FInputActionInstance& Action)
 
 void ATaePlayerController::DoSpectralShift(const FInputActionInstance& Action)
 {
+	if (!OwnerCharacter) return;
+
+	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	static const FGameplayTag ArcaneTag = FGameplayTag::RequestGameplayTag(FName("Arcane.Vision"));
+	if (ASC->HasMatchingGameplayTag(ArcaneTag))
+	{
+		if (const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromClass(UGA_SpectralShift::StaticClass()))
+		{
+			if (UGameplayAbility* Instance = Spec->GetPrimaryInstance())
+			{
+				ASC->CancelAbility(Instance);
+			}
+		}
+	}
+	else
+	{
+		ASC->TryActivateAbilityByClass(UGA_SpectralShift::StaticClass());
+	}
 }
 
 #if WITH_EDITOR
