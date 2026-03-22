@@ -30,7 +30,8 @@ Set `r.CustomDepth=3` in `DefaultEngine.ini` to enable stencil writes.
 
 ## UTaeStateComponent
 
-Attach to any Actor that needs to react to the Spectral state.
+Attach to any level Actor that needs to react to the Spectral state (e.g. `ATaeGridCube`).
+Does **not** own tags — listens to the `ATaeCharacter` ASC via `RegisterGameplayTagEvent` and re-broadcasts locally.
 
 ```cpp
 // Planned API
@@ -44,15 +45,12 @@ public:
     UPROPERTY(BlueprintAssignable)
     FOnStateChanged OnStateChanged;
 
-    void AddState(FGameplayTag Tag);
-    void RemoveState(FGameplayTag Tag);
-    bool HasState(FGameplayTag Tag) const;
-
-private:
-    UPROPERTY()
-    FGameplayTagContainer ActiveStates;
+protected:
+    virtual void BeginPlay() override; // binds to ATaeCharacter ASC tag events
 };
 ```
+
+Tags are owned by `ATaeCharacter::UAbilitySystemComponent`. `UTaeStateComponent` is a propagation bridge — it keeps level actors decoupled from GAS.
 
 ## Post-Process Material (M_SpectralEdge)
 

@@ -3,6 +3,7 @@
 Guidance for AI agents working in this UE 5.7 first-person puzzle game.
 
 > For deeper design context see [docs/Architecture.md](docs/Architecture.md) · [docs/Roadmap.md](docs/Roadmap.md) · [docs/SpectralVision.md](docs/SpectralVision.md) · [docs/UIArchitecture.md](docs/UIArchitecture.md)
+> For human-readable code style and full commit tag vocabulary see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 
@@ -46,16 +47,7 @@ TObjectPtr<UCameraComponent> FirstPersonCamera;
 UCameraComponent* FirstPersonCamera;
 ```
 
-**UPROPERTY specifier patterns in use:**
-
-| Specifier | When used |
-|---|---|
-| `EditDefaultsOnly` | Designer config set in BP class defaults (e.g. `MainWidgetClass`) |
-| `EditAnywhere` | Runtime-assignable in controller (e.g. Input actions/mapping context) |
-| `VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true")` | Private component exposed read-only |
-| `Transient` | Runtime-only reference cached from engine callback (e.g. `OwnerCharacter`) |
-
-Forward-declare classes used only as `TObjectPtr` in headers; include the actual header in `.cpp`.
+Forward-declare in headers, include in `.cpp`. Full specifier guide in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -71,7 +63,7 @@ void DoMove(IA_t Action);         // ETriggerEvent::Triggered
 void DoLook(IA_t Action);         // ETriggerEvent::Triggered
 void DoJump(IA_t Action);         // ETriggerEvent::Started
 void DoStopJumping(IA_t Action);  // ETriggerEvent::Completed
-void DoToggleEyes(IA_t Action);   // ETriggerEvent::Started — Spectral Shift stub (Day 2)
+void DoSpectralShift(IA_t Action); // ETriggerEvent::Started — activates UGA_ArcaneShift (Day 2)
 ```
 
 Actions are `EditAnywhere TObjectPtr<UInputAction>` properties on the controller; assigned in `BP_TaePlayerController` Details > Tae.
@@ -135,15 +127,24 @@ PlayerControllerClass = ATaePlayerController::StaticClass();
 
 ## Logging
 
-Project log category: `LogTae` — declared in `Public/ThroughArcaneEyes.h`, defined in `Private/ThroughArcaneEyes.cpp`.
+Use `LogTae` (never `LogTemp`). `Warning` for null-guards only — no flow logging.
 
 ```cpp
 #include "ThroughArcaneEyes.h"
 UE_LOG(LogTae, Warning, TEXT("[PC] SomeProperty is NULL — assign it in BP_X"));
 ```
 
-Use `Warning` for null-guards on BP-assigned properties (fires once at startup, actionable).
-Do not use `Display` for normal flow. Do not use `LogTemp` — it signals throwaway code.
+---
+
+## Commit Format
+
+```
+[TAG][sigil] short description
+```
+
+Sigils: `[+]` add · `[-]` remove · `[*]` fix/tweak
+Tags: `[Core]` `[Character]` `[Input]` `[GAS]` `[UI]` `[Rendering]` `[Grid]` `[Animation]` `[Docs]` `[Config]` `[Meta]`
+Full vocabulary in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -158,8 +159,4 @@ Do not use `Display` for normal flow. Do not use `LogTemp` — it signals throwa
 
 ## Adding New Classes
 
-1. Place header in `Source/ThroughArcaneEyes/Public/<Domain>/TaeFoo.h`
-2. Place implementation in `Source/ThroughArcaneEyes/Private/<Domain>/TaeFoo.cpp`
-3. Include `"<Domain>/TaeFoo.generated.h"` as the **last** include in the header
-4. Use `THROUGHARCANEEYES_API` in the class declaration
-5. No new Build.cs modules needed — everything lives in the single `ThroughArcaneEyes` module
+See [CONTRIBUTING.md](CONTRIBUTING.md). Key constraint: no new Build.cs modules — everything lives in the single `ThroughArcaneEyes` module.

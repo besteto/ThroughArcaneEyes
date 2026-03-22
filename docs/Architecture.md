@@ -8,7 +8,7 @@
 UGameInstance
   └── UTaeGameInstance        owns UTaeHudViewModel (Day 4)
 
-AGameModeBase
+AGameMode
   └── ATaeGameMode            registers all framework classes in ctor
 
 AGameState
@@ -41,8 +41,9 @@ Core, CoreUObject, Engine, InputCore, EnhancedInput, UMG
 ```
 
 Planned additions:
+- `GameplayAbilities`, `GameplayTags`, `GameplayTasks` (Day 2)
 - `CommonUI`, `ModelViewViewModel` (Day 4)
-- `GameplayTags`, `GameplayAbilities` (Day 2, if GAS is adopted)
+- `PoseSearch` (Day 6)
 
 ## Input Layers
 
@@ -70,13 +71,15 @@ PlayerControllerClass = ATaePlayerController::StaticClass();
 ## Data Flow: Spectral Shift
 
 ```
-PlayerInput (IA_SpectralShift)
+PlayerInput (IA_ToggleEyesAction)
   → ATaePlayerController::DoSpectralShift()
-    → ATaeCharacter::UTaeStateComponent::AddTag(GameplayTag.Arcane.Vision)
-      → OnStateChanged.Broadcast()
-        → ATaeGridCube (toggles mesh/collision)
-        → UTaeHudViewModel (sets bArcaneActive → WBP_HUD updates)
-        → Post-Process Volume (enables M_SpectralEdge)
+    → ATaeCharacter::UAbilitySystemComponent::TryActivateAbility(UGA_ArcaneShift)
+      → UGA_ArcaneShift grants/removes GameplayTag.Arcane.Vision
+        → UTaeStateComponent::RegisterGameplayTagEvent fires OnStateChanged
+          → ATaeGridCube (swaps material, toggles collision)
+          → UTaeHudViewModel (sets bArcaneActive → WBP_HUD updates)
+          → BP_SpectralVolume (enables M_SpectralEdge post-process)
+          → UCharacterMovementComponent (gravity/air control tuned)
 ```
 
 ## UI Stack

@@ -58,6 +58,7 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checkli
 | [docs/Architecture.md](docs/Architecture.md) | Class hierarchy, module deps, data-flow diagrams |
 | [docs/SpectralVision.md](docs/SpectralVision.md) | Spectral Shift system: GameplayTags, StateComponent, Post-Process pipeline |
 | [docs/UIArchitecture.md](docs/UIArchitecture.md) | MVVM ViewModel, Common UI stack, widget conventions |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Commit format, code style, naming conventions |
 | [AGENTS.md](AGENTS.md) | Guide for AI agents working in this codebase |
 
 # 📝 Design Document: The "Arcane" Logic

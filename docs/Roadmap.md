@@ -27,11 +27,12 @@
 **Goal:** Playable character in-editor with all input wired end-to-end.
 
 - [x] C++ framework classes — `ATaeCharacter`, `ATaePlayerController`, `ATaeGameMode` (`AGameMode`), `ATaeGameState`, `UTaeGameInstance`, `ATaeHud`
-- [x] Enhanced Input — Move / Look / Jump / `DoToggleEyes` stub bound in controller; WASD Swizzle/Negate modifiers correct
-- [x] `LogTae` project log category; null-guard warnings on all BP-assigned properties
-- [x] Blueprint parenting — `BP_TaeGameMode`, `BP_Hero`, `BP_TaePlayerController` created with correct parents
-- [x] Input assets — `IMC_Default`, `IA_MoveInputAction`, `IA_LookInputAction`, `IA_JumpInputAction`
-- [x] Config — `GlobalDefaultGameMode` and Enhanced Input component class set
+- [x] Enhanced Input — Move / Look / Jump / `DoSpectralShift` stub bound in controller; WASD Swizzle/Negate modifiers correct
+- [x] `LogTae` project log category; null-guard warnings on all BP-assigned properties → migrated to `IsDataValid` on `ATaePlayerController`
+- [x] Blueprint parenting — `BP_TaeGameMode`, `BP_Hero`, `BP_TaePlayerController`, `BP_TaeGameState`, `BP_TaeGameInstance`, `BP_TaeHud` created with correct parents; class refs set in `BP_TaeGameMode` Class Defaults
+- [x] Input assets — `IMC_Default`, `IA_MoveInputAction`, `IA_LookInputAction`, `IA_JumpInputAction`, `IA_SpectralShift`
+- [x] Config — `GlobalDefaultGameMode`, Enhanced Input component class, `GameInstanceClass` set
+- [x] `UTaeMainMenuWidget` (`UCommonActivatableWidget`) + `WBP_MainMenu` placeholder — Start (DeactivateWidget) / Exit (QuitGame); shown via `ATaeHud::BeginPlay`; `CommonUI` added to `Build.cs`
 
 ---
 
@@ -39,10 +40,7 @@
 
 **Goal:** GAS drives the Arcane toggle; pressing a key activates `GA_ArcaneShift`, grants the vision tag, and triggers the post-process pass.
 
-**Before starting — loose ends from Day 1:**
-- [ ] `IA_ToggleEyesAction` asset — create and assign in `BP_TaePlayerController`
-- [ ] `BP_TaeGameState`, `BP_TaeHud` (assign `MainWidgetClass`), `BP_TaeGameInstance` — not strictly required to play but needed before Day 4
-- [ ] `DefaultGame.ini` `GameInstanceClass` → `BP_TaeGameInstance_C` once BP is created
+**Before starting — loose ends from Day 1:** ✅ All clear
 
 ### GAS Foundation (C++)
 - [ ] Add `GameplayAbilities`, `GameplayTags`, `GameplayTasks` to `Build.cs` public deps
@@ -50,7 +48,7 @@
 - [ ] `UTaeManaAttributeSet` — `UAttributeSet` with `Mana` attribute; feeds Day 4 ViewModel directly
 - [ ] `UGA_ArcaneShift` — `UGameplayAbility` subclass; grants/removes `GameplayTag.Arcane.Vision`, pushes/pops `IMC_Arcane` via `UEnhancedInputLocalPlayerSubsystem`
 - [ ] `GameplayTag.Arcane.Vision` registered in `Config/DefaultGameplayTags.ini`
-- [ ] `DoToggleEyes` in `ATaePlayerController` — calls `TryActivateAbilityByClass(UGA_ArcaneShift)` instead of toggling directly
+- [ ] `DoSpectralShift` in `ATaePlayerController` — calls `TryActivateAbilityByClass(UGA_ArcaneShift)` instead of toggling directly
 
 ### State Propagation (C++)
 - [ ] `UTaeStateComponent` — lightweight `UActorComponent` on level actors (e.g. `ATaeGridCube`); listens to ASC tag changes via `RegisterGameplayTagEvent` and broadcasts `OnStateChanged`
