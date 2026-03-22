@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "TaePlayerController.generated.h"
 
+struct FInputActionInstance;
 class UInputMappingContext;
 class UInputAction;
 
@@ -15,7 +16,6 @@ class THROUGHARCANEEYES_API ATaePlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	using IA_t = const struct FInputActionInstance&;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Tae")
@@ -31,18 +31,22 @@ protected:
 	TObjectPtr<UInputAction> LookAction;
 
 	UPROPERTY(EditAnywhere, Category = "Tae")
-	TObjectPtr<UInputAction> ToggleEyesAction;
+	TObjectPtr<UInputAction> SpectralShiftAction;
 
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 	virtual void SetPawn(APawn* InPawn) override;
 
-	void DoMove(IA_t Action);
-	void DoLook(IA_t Action);
-	void DoJump(IA_t Action);
-	void DoStopJumping(IA_t Action);
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
 
-	void DoToggleEyes(IA_t Action);
+	void DoMove(const FInputActionInstance& Action);
+	void DoLook(const FInputActionInstance& Action);
+	void DoJump(const FInputActionInstance& Action);
+	void DoStopJumping(const FInputActionInstance& Action);
+
+	void DoSpectralShift(const FInputActionInstance& Action);
 
 private:
 	UPROPERTY(Transient)

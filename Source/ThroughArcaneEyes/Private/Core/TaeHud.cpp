@@ -1,18 +1,19 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Core/TaeHud.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/TaeMainMenuWidget.h"
 
 void ATaeHud::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (MainWidgetClass)
+	if (MainMenuClass)
 	{
-		MainWidget = CreateWidget<UUserWidget>(GetWorld(), MainWidgetClass);
-		if (MainWidget)
+		MainMenu = CreateWidget<UTaeMainMenuWidget>(GetOwningPlayerController(), MainMenuClass);
+		if (MainMenu)
 		{
-			MainWidget->AddToViewport();
+			MainMenu->AddToPlayerScreen();
+			MainMenu->ActivateWidget();
 		}
 	}
 }

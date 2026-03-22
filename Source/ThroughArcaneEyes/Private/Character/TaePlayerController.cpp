@@ -6,6 +6,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
+
 void ATaePlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -31,16 +35,11 @@ void ATaePlayerController::SetupInputComponent()
 
 	if (UEnhancedInputComponent* EiComp = Cast<UEnhancedInputComponent>(InputComponent))
 	{
-		if (!MoveAction)        UE_LOG(LogTae, Warning, TEXT("[PC] MoveAction is NULL — assign it in BP_TaePlayerController"));
-		if (!LookAction)        UE_LOG(LogTae, Warning, TEXT("[PC] LookAction is NULL — assign it in BP_TaePlayerController"));
-		if (!JumpAction)        UE_LOG(LogTae, Warning, TEXT("[PC] JumpAction is NULL — assign it in BP_TaePlayerController"));
-		if (!ToggleEyesAction)  UE_LOG(LogTae, Warning, TEXT("[PC] ToggleEyesAction is NULL — assign it in BP_TaePlayerController"));
-
-		EiComp->BindAction(MoveAction,        ETriggerEvent::Triggered, this, &ThisClass::DoMove);
-		EiComp->BindAction(LookAction,        ETriggerEvent::Triggered, this, &ThisClass::DoLook);
-		EiComp->BindAction(JumpAction,        ETriggerEvent::Started,   this, &ThisClass::DoJump);
-		EiComp->BindAction(JumpAction,        ETriggerEvent::Completed, this, &ThisClass::DoStopJumping);
-		EiComp->BindAction(ToggleEyesAction,  ETriggerEvent::Started,   this, &ThisClass::DoToggleEyes);
+		EiComp->BindAction(MoveAction,          ETriggerEvent::Triggered, this, &ThisClass::DoMove);
+		EiComp->BindAction(LookAction,          ETriggerEvent::Triggered, this, &ThisClass::DoLook);
+		EiComp->BindAction(JumpAction,          ETriggerEvent::Started,   this, &ThisClass::DoJump);
+		EiComp->BindAction(JumpAction,          ETriggerEvent::Completed, this, &ThisClass::DoStopJumping);
+		EiComp->BindAction(SpectralShiftAction, ETriggerEvent::Started,   this, &ThisClass::DoSpectralShift);
 	}
 	else
 	{
@@ -60,7 +59,7 @@ void ATaePlayerController::SetPawn(APawn* InPawn)
 	}
 }
 
-void ATaePlayerController::DoMove(IA_t Action)
+void ATaePlayerController::DoMove(const FInputActionInstance& Action)
 {
 	if (!OwnerCharacter) return;
 	const FVector2D Axis = Action.GetValue().Get<FVector2D>();
@@ -68,23 +67,58 @@ void ATaePlayerController::DoMove(IA_t Action)
 	OwnerCharacter->AddMovementInput(OwnerCharacter->GetActorRightVector(),   Axis.X);
 }
 
-void ATaePlayerController::DoJump(IA_t Action)
+void ATaePlayerController::DoJump(const FInputActionInstance& Action)
 {
 	if (OwnerCharacter) OwnerCharacter->Jump();
 }
 
-void ATaePlayerController::DoStopJumping(IA_t Action)
+void ATaePlayerController::DoStopJumping(const FInputActionInstance& Action)
 {
 	if (OwnerCharacter) OwnerCharacter->StopJumping();
 }
 
-void ATaePlayerController::DoLook(IA_t Action)
+void ATaePlayerController::DoLook(const FInputActionInstance& Action)
 {
 	const FVector2D Axis = Action.GetValue().Get<FVector2D>();
 	AddYawInput(Axis.X);
 	AddPitchInput(Axis.Y);
 }
 
-void ATaePlayerController::DoToggleEyes(IA_t Action)
+void ATaePlayerController::DoSpectralShift(const FInputActionInstance& Action)
 {
 }
+
+#if WITH_EDITOR
+EDataValidationResult ATaePlayerController::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	if (!DefaultMappingContext)
+	{
+		Context.AddError(NSLOCTEXT("TaeValidation", "NoMappingContext", "TaePlayerController: DefaultMappingContext is not assigned."));
+		Result = EDataValidationResult::Invalid;
+	}
+	if (!MoveAction)
+	{
+		Context.AddError(NSLOCTEXT("TaeValidation", "NoMoveAction", "TaePlayerController: MoveAction is not assigned."));
+		Result = EDataValidationResult::Invalid;
+	}
+	if (!LookAction)
+	{
+		Context.AddError(NSLOCTEXT("TaeValidation", "NoLookAction", "TaePlayerController: LookAction is not assigned."));
+		Result = EDataValidationResult::Invalid;
+	}
+	if (!JumpAction)
+	{
+		Context.AddError(NSLOCTEXT("TaeValidation", "NoJumpAction", "TaePlayerController: JumpAction is not assigned."));
+		Result = EDataValidationResult::Invalid;
+	}
+	if (!SpectralShiftAction)
+	{
+		Context.AddError(NSLOCTEXT("TaeValidation", "NoSpectralShiftAction", "TaePlayerController: SpectralShiftAction is not assigned."));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	return Result;
+}
+#endif

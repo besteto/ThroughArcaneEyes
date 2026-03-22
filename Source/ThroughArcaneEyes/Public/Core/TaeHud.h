@@ -6,7 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "TaeHud.generated.h"
 
-class UUserWidget;
+class UTaeMainMenuWidget;
 
 UCLASS()
 class THROUGHARCANEEYES_API ATaeHud : public AHUD
@@ -17,10 +17,10 @@ public:
 	virtual void BeginPlay() override;
 
 protected:
-	// Assign your main UMG widget blueprint here in BP_HUD
+	// Assign WBP_MainMenu in BP_TaeHud (Details > UI)
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UUserWidget> MainWidgetClass;
+	TSubclassOf<UTaeMainMenuWidget> MainMenuClass;
 
 	UPROPERTY()
-	TObjectPtr<UUserWidget> MainWidget;
+	TObjectPtr<UTaeMainMenuWidget> MainMenu;
 };
