@@ -21,7 +21,7 @@ APlayerController
   └── ATaePlayerController    owns Enhanced Input; caches ATaeCharacter via SetPawn()
 
 ACharacter
-  └── ATaeCharacter           first-person camera; movement driven by controller
+  └── ATaeCharacter           first-person camera; ArmsMesh attached to camera socket (owner-only); movement driven by controller
 
 UActorComponent
   └── UTaeStateComponent      (Day 2) GameplayTagContainer + OnStateChanged delegate
@@ -43,7 +43,6 @@ Core, CoreUObject, Engine, InputCore, EnhancedInput, UMG
 Planned additions:
 - `GameplayAbilities`, `GameplayTags`, `GameplayTasks` (Day 2)
 - `CommonUI`, `ModelViewViewModel` (Day 4)
-- `PoseSearch` (Day 6)
 
 ## Input Layers
 

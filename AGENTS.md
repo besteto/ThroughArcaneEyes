@@ -36,7 +36,7 @@ Targets: `ThroughArcaneEyes.Target.cs` (Game) and `ThroughArcaneEyesEditor.Targe
 
 Source mirrors header layout: `Public/<Domain>/TaeX.h` → `Private/<Domain>/TaeX.cpp`.
 
-Current domains: `Core/`, `Character/`, `Data/`, `UI/`, `GAS/`, `Components/`.
+Current domains: `Core/`, `Character/`, `Data/`, `UI/`, `GAS/`, `Components/`, `World/`.
 
 ---
 
@@ -110,6 +110,11 @@ Delegates in use: `FOnArcaneStateChanged` on `UTaeStateComponent` (`DECLARE_DYNA
 - Attached to root component
 - `SetRelativeLocation(FVector(0, 0, 60))` — eye height
 - `bUsePawnControlRotation = true`
+
+`ArmsMesh` (`USkeletalMeshComponent`) is attached to `FirstPersonCamera`:
+- `bOnlyOwnerSee = true`, `bCastDynamicShadow = false`
+- Full-body `GetMesh()` has `bOwnerNoSee = true`
+- Mesh and `ABP_Arms` are assigned in `BP_Hero`
 
 ---
 

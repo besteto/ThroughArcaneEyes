@@ -8,9 +8,9 @@
 | Day | Focus | Deliverable | Status |
 |-----|-------|-------------|--------|
 | Day 1 | Core Framework | C++ Character/Controller + Enhanced Input | ✅ Done |
-| Day 2 | GAS + Spectral Shaders | GAS Foundation + Arcane Toggle + Post-Process | ⬜ Not started |
-| Day 3 | Grid & Interaction | `AGridCube` + hidden/solid state logic | ⬜ Not started |
-| Day 4 | Data-Driven UI | MVVM Viewmodel + Common UI HUD | ⬜ Not started |
+| Day 2 | GAS + Spectral Shaders | GAS Foundation + Arcane Toggle + Post-Process | ✅ Done |
+| Day 3 | Grid + First-Person Hands | `ATaeGridCube` + `ATaeGridManager` + Arms mesh wired | 🔄 In Progress |
+| Day 4 | Data-Driven UI | MVVM Viewmodel + Common UI HUD + Grid DataTable | ⬜ Not started |
 | Day 5 | Portal & Polish | Render-to-Texture Portal + Win Condition UI | ⬜ Not started |
 
 ### Sprint 2 — Enhancement
@@ -18,7 +18,7 @@
 
 | Day | Focus | Deliverable | Status |
 |-----|-------|-------------|--------|
-| Day 6 | Animation | Motion Matching — realistic locomotion + Arcane float | ⬜ Not started |
+| Day 6 | Arms Animation + Camera Feel | Arms ABP + procedural camera bob + Arcane float tuning | ⬜ Not started |
 
 ---
 
@@ -50,14 +50,15 @@
 
 ---
 
-## Day 3 — Grid & Interaction
+## Day 3 — Grid + First-Person Hands
 
-**Goal:** Procedural cube grid loads; cubes toggle hidden/solid via the Spectral state.
+**Goal:** Procedural cube grid loads and reacts to Arcane Vision. Player sees their own hands. Devlog gif ready.
 
 ### C++
-- [ ] `ATaeGridCube` — Actor with `UStaticMeshComponent` + `UTaeStateComponent`; responds to `OnStateChanged`
-- [ ] `ATaeGridManager` — spawns an N×N×N grid of `ATaeGridCube` from a `DataTable` or procedural config
-- [ ] Collision toggle — `ATaeGridCube` disables `ECollisionEnabled::NoCollision` when hidden, restores on Arcane off
+- [x] `ATaeGridCube` — Actor with `UStaticMeshComponent` + `UTaeStateComponent`; responds to `OnStateChanged`
+- [x] `ATaeGridManager` — spawns an N×M×K grid of `ATaeGridCube` from configurable `UPROPERTY` dimensions; no DataTable yet
+- [x] Collision toggle — `ATaeGridCube` sets `ECollisionEnabled::NoCollision` when hidden, restores on Arcane off
+- [x] `ATaeCharacter` — add `ArmsMesh USkeletalMeshComponent`; attach to camera socket; `bOnlyOwnerSee = true`; main mesh `bOwnerNoSee = true`
 
 ### Materials (Substrate)
 > Substrate is already enabled in `DefaultEngine.ini`. Two separate materials swapped by `ATaeGridCube` via `UStaticMeshComponent::SetMaterial()` on `OnStateChanged`.
@@ -65,17 +66,22 @@
 - [ ] `M_GridCube_Arcane` — Arcane vision state; Substrate translucent slab with emissive layer for glow effect
 
 ### Editor
-- [ ] `DT_GridLayout` DataTable (row struct `FTaeGridRow`) — defines which cubes start hidden
 - [ ] `BP_GridCube` → parent `ATaeGridCube`; assign mesh + Substrate materials
-- [ ] `BP_GridManager` placed in level
+- [ ] `BP_GridManager` — place in level; set grid dimensions
+- [ ] `BP_Hero` — assign hands skeletal mesh to `ArmsMesh`; position against camera
 
 ---
 
 ## Day 4 — Data-Driven UI
 
-**Goal:** HUD reacts to mana/vision state with zero Tick usage.
+**Goal:** HUD reacts to mana/vision state with zero Tick usage. Grid layout driven by DataTable.
 
-### C++
+### C++ — Grid config
+- [ ] `FTaeGridRow` struct — `USTRUCT`; fields: `GridPosition (FIntVector)`, `bStartHidden (bool)`
+- [ ] `DT_GridLayout` DataTable using `FTaeGridRow` — defines which cubes start hidden
+- [ ] `ATaeGridManager` — wire to read from `DT_GridLayout`; fall back to procedural fill if table is empty
+
+### C++ — MVVM
 - [ ] `UTaeHudViewModel` — extends `UMVVMViewModelBase`; exposes `Mana` (float) and `bArcaneActive` (bool) with `FIELD_NOTIFY`
 - [ ] `UTaeGameInstance` — owns and initialises `UTaeHudViewModel`
 - [ ] Connect `UTaeStateComponent::OnStateChanged` → ViewModel setter
@@ -108,25 +114,18 @@
 
 ---
 
-## Day 6 — Animation
+## Day 6 — Arms Animation + Camera Feel
 
-**Goal:** Character movement feels grounded in normal mode and weightless/magical in Arcane mode, driven by Motion Matching.
+**Goal:** Hands animate naturally; camera movement feels weighted in normal mode and drifting in Arcane mode. No full-body mesh or Motion Matching needed.
 
-> Depends on Day 2 (GAS tag `GameplayTag.Arcane.Vision` used to blend between databases).
-
-### Setup
-- [ ] Enable `PoseSearch` plugin in `ThroughArcaneEyes.uproject`
-- [ ] Add `PoseSearch` to `Build.cs` public deps
-
-### Pose Databases
-- [ ] `PSD_Locomotion` — normal movement; idle, walk, run, jump cycles; realistic forest traversal feel
-- [ ] `PSD_ArcaneFloat` — Arcane mode; slow drift, hover idle, gliding movement; no hard foot plant
+> Depends on Day 3 (`ArmsMesh` wired to camera) and Day 2 (`GameplayTag.Arcane.Vision` driving state).
 
 ### C++
-- [ ] `ATaeCharacter` — expose `bArcaneActive` state for the Animation Blueprint to read (via ASC tag query or a replicated bool)
-- [ ] Tune `UCharacterMovementComponent` for Arcane mode — reduced gravity scale, increased air control, lower max walk speed; applied/removed by `UGA_ArcaneShift`
+- [ ] `ATaeCharacter` — tune `UCharacterMovementComponent` for Arcane mode: reduced gravity scale, increased air control, lower max walk speed; applied/removed by `UGA_SpectralShift` on tag grant/remove
+- [ ] Procedural camera bob — velocity-driven offset or `UCameraShakeBase` subclass; active in normal mode only
 
 ### Editor
-- [ ] `ABP_Hero` Animation Blueprint — Motion Matching node selecting between `PSD_Locomotion` and `PSD_ArcaneFloat` based on `bArcaneActive`
-- [ ] Blend time between databases (suggested: 0.3–0.5s) to avoid snapping on toggle
-- [ ] Assign `ABP_Hero` to `BP_Hero` skeletal mesh
+- [ ] `ABP_Arms` Animation Blueprint — states: idle, shift-cast trigger, subtle breathing sway
+- [ ] Wire `GameplayTag.Arcane.Vision` → `ABP_Arms` state (shift-cast anim plays on toggle)
+- [ ] Blend time on state transitions (suggested: 0.2–0.3s)
+- [ ] Assign `ABP_Arms` to `ArmsMesh` in `BP_Hero`

@@ -2,6 +2,7 @@
 
 #include "Character/TaeCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "AbilitySystemComponent.h"
 #include "GAS/TaeManaAttributeSet.h"
 #include "GAS/GA_SpectralShift.h"
@@ -12,6 +13,14 @@ ATaeCharacter::ATaeCharacter()
 	FirstPersonCamera->SetupAttachment(GetRootComponent());
 	FirstPersonCamera->SetRelativeLocation(FVector(0.f, 0.f, 60.f)); // eye height
 	FirstPersonCamera->bUsePawnControlRotation = true;
+
+	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
+	ArmsMesh->SetupAttachment(FirstPersonCamera);
+	ArmsMesh->bOnlyOwnerSee = true;
+	ArmsMesh->bCastDynamicShadow = false;
+
+	// Hide the full-body mesh from the owning player (arms replace it in first-person)
+	GetMesh()->bOwnerNoSee = true;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	ManaAttributeSet = CreateDefaultSubobject<UTaeManaAttributeSet>(TEXT("ManaAttributeSet"));
