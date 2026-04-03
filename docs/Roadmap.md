@@ -9,7 +9,7 @@
 |-----|-------|-------------|--------|
 | Day 1 | Core Framework | C++ Character/Controller + Enhanced Input | ✅ Done |
 | Day 2 | GAS + Spectral Shaders | GAS Foundation + Arcane Toggle + Post-Process | ✅ Done |
-| Day 3 | Grid + First-Person Hands | `ATaeGridCube` + `ATaeGridManager` + Arms mesh wired | 🔄 In Progress |
+| Day 3 | Grid + Camera | `ATaeGridCube` + `ATaeGridManager` + over-shoulder camera | 🔄 In Progress |
 | Day 4 | Data-Driven UI | MVVM Viewmodel + Common UI HUD + Grid DataTable | ⬜ Not started |
 | Day 5 | Portal & Polish | Render-to-Texture Portal + Win Condition UI | ⬜ Not started |
 
@@ -18,7 +18,7 @@
 
 | Day | Focus | Deliverable | Status |
 |-----|-------|-------------|--------|
-| Day 6 | Arms Animation + Camera Feel | Arms ABP + procedural camera bob + Arcane float tuning | ⬜ Not started |
+| Day 6 | Animation (Motion Matching) | Motion Matching locomotion + Arcane float + footsteps | ⬜ Not started |
 
 ---
 
@@ -42,23 +42,31 @@
 
 **Before starting — loose ends from Day 1:** ✅ All clear
 
-**C++ complete** — GAS deps, ASC + `UTaeManaAttributeSet` + `UGA_SpectralShift` + `UTaeStateComponent` all done; `Arcane.Vision` tag confirmed working in PIE.
+**All complete.**
 
-### Materials / Rendering (remaining)
-- [ ] Post-Process Material `M_SpectralEdge` — Sobel-edge detection on Custom Depth (`r.CustomDepth=3` already set)
-- [ ] `BP_SpectralVolume` — Post-Process Volume; `BP_GA_SpectralShift` enables/disables it; assign `IMC_Arcane`
+### C++ / GAS
+- GAS deps, ASC + `UTaeManaAttributeSet` + `UGA_SpectralShift` + `UTaeStateComponent`
+- `UTaeGameplayAbility` abstract base — `AbilityDuration` timer (`0` = player-cancel only); all future abilities inherit from this
+- `UGA_SpectralShift` → `UTaeGameplayAbility`; toggle via `TAG_Arcane_Vision`; `IMC_Arcane` push/pop in Activate/End
+- Native tag `TAG_Arcane_Vision` declared in `TaeGASTypes.h`, defined in `TaeGASTypes.cpp` — no `FName` strings in calling code
+- `ATaeCharacter` exposes `SpectralShiftHandle`; controller uses `TryActivateAbility` / `CancelAbilityHandle` — no class-based lookup
+- `SpectralShiftAbility` (`TSubclassOf`) on `ATaeCharacter` — assign `BP_GA_SpectralShift` in `BP_Hero` Class Defaults
+
+### Materials / Rendering
+- `M_SpectralEdge` — animated plasma overlay; DDX/DDY depth edge mask; `Floor(Time)` stepped animation
+- `BP_SpectralVolume` — Infinite Extent post-process volume; disabled by default; toggled by `BP_GA_SpectralShift`
 
 ---
 
 ## Day 3 — Grid + First-Person Hands
 
-**Goal:** Procedural cube grid loads and reacts to Arcane Vision. Player sees their own hands. Devlog gif ready.
+**Goal:** Procedural cube grid loads and reacts to Arcane Vision. Close over-shoulder third-person camera. Devlog gif ready.
 
 ### C++
 - [x] `ATaeGridCube` — Actor with `UStaticMeshComponent` + `UTaeStateComponent`; responds to `OnStateChanged`
 - [x] `ATaeGridManager` — spawns an N×M×K grid of `ATaeGridCube` from configurable `UPROPERTY` dimensions; no DataTable yet
 - [x] Collision toggle — `ATaeGridCube` sets `ECollisionEnabled::NoCollision` when hidden, restores on Arcane off
-- [x] `ATaeCharacter` — add `ArmsMesh USkeletalMeshComponent`; attach to camera socket; `bOnlyOwnerSee = true`; main mesh `bOwnerNoSee = true`
+- [x] `ATaeCharacter` — `USpringArmComponent` + `UCameraComponent` close over-shoulder setup (replaces first-person camera)
 
 ### Materials (Substrate)
 > Substrate is already enabled in `DefaultEngine.ini`. Two separate materials swapped by `ATaeGridCube` via `UStaticMeshComponent::SetMaterial()` on `OnStateChanged`.
@@ -68,7 +76,7 @@
 ### Editor
 - [ ] `BP_GridCube` → parent `ATaeGridCube`; assign mesh + Substrate materials
 - [ ] `BP_GridManager` — place in level; set grid dimensions
-- [ ] `BP_Hero` — assign hands skeletal mesh to `ArmsMesh`; position against camera
+- [ ] `BP_Hero` — verify spring arm length + socket offset in viewport
 
 ---
 
@@ -107,25 +115,43 @@
 ### Materials
 - [ ] `M_Portal` — samples `UTextureRenderTarget2D`; distortion/chromatic aberration pass
 
+### Audio
+> Import assets as `.wav`; wire via `UGameplayStatics::PlaySound2D` or `UAudioComponent`. No custom audio C++ needed this day.
+- [ ] `S_UI_Click` — button hover/confirm SFX; bound to widget events in `WBP_MainMenu` / `WBP_PauseMenu`
+- [ ] `S_SpectralShift_On` + `S_SpectralShift_Off` — magical whoosh on toggle; played in `UGA_SpectralShift`
+- [ ] `S_GridReveal` — crystalline chime when hidden cubes materialise; played in `BP_GridCube` on state change
+- [ ] `Music_Forest` — mysterious ambient loop (normal mode)
+- [ ] `Music_Arcane` — ethereal loop (Arcane mode); crossfades with `Music_Forest` on `Arcane.Vision` tag change
+- [ ] `S_Portal_Ambience` — dimensional hum loop; `UAudioComponent` on `BP_Portal`
+- [ ] `S_Victory` — short magical flourish triggered on win condition
+- [ ] Music crossfade logic — `UAudioComponent` pair on `BP_TaeHud`; faded via `UTaeStateComponent::OnArcaneStateChanged`
+
 ### Polish
-- [ ] Ambient sound attenuation on grid cubes
-- [ ] Screen-space feedback when Spectral Shift activates (vignette flash)
+- [ ] Screen-space vignette flash when Spectral Shift activates
 - [ ] `DefaultGame.ini` `ProjectVersion` bump to `0.1.0`
 
 ---
 
-## Day 6 — Arms Animation + Camera Feel
+## Day 6 — Animation (Motion Matching)
 
-**Goal:** Hands animate naturally; camera movement feels weighted in normal mode and drifting in Arcane mode. No full-body mesh or Motion Matching needed.
+**Goal:** Character movement feels grounded in normal mode and weightless/magical in Arcane mode, driven by Motion Matching. Robed figure benefits from cloth sim + drift.
 
-> Depends on Day 3 (`ArmsMesh` wired to camera) and Day 2 (`GameplayTag.Arcane.Vision` driving state).
+> Depends on Day 2 (`GameplayTag.Arcane.Vision` used to blend between databases).
+
+### Setup
+- [ ] Enable `PoseSearch` plugin in `ThroughArcaneEyes.uproject`
+- [ ] Add `PoseSearch` to `Build.cs` public deps
+
+### Pose Databases
+- [ ] `PSD_Locomotion` — normal movement; idle, walk, run, jump; grounded forest traversal feel
+- [ ] `PSD_ArcaneFloat` — Arcane mode; slow drift, hover idle, gliding; no hard foot plant
 
 ### C++
-- [ ] `ATaeCharacter` — tune `UCharacterMovementComponent` for Arcane mode: reduced gravity scale, increased air control, lower max walk speed; applied/removed by `UGA_SpectralShift` on tag grant/remove
-- [ ] Procedural camera bob — velocity-driven offset or `UCameraShakeBase` subclass; active in normal mode only
+- [ ] `ATaeCharacter` — expose `bArcaneActive` for the Animation Blueprint (via ASC tag query)
+- [ ] Tune `UCharacterMovementComponent` for Arcane mode — reduced gravity scale, increased air control, lower max walk speed; applied/removed by `UGA_SpectralShift`
 
 ### Editor
-- [ ] `ABP_Arms` Animation Blueprint — states: idle, shift-cast trigger, subtle breathing sway
-- [ ] Wire `GameplayTag.Arcane.Vision` → `ABP_Arms` state (shift-cast anim plays on toggle)
-- [ ] Blend time on state transitions (suggested: 0.2–0.3s)
-- [ ] Assign `ABP_Arms` to `ArmsMesh` in `BP_Hero`
+- [ ] `ABP_Hero` Animation Blueprint — Motion Matching node selecting between `PSD_Locomotion` and `PSD_ArcaneFloat` based on `bArcaneActive`
+- [ ] Blend time between databases (suggested: 0.3–0.5s) to avoid snapping on toggle
+- [ ] Assign `ABP_Hero` to `BP_Hero` skeletal mesh
+- [ ] `S_Footstep_Robe` — soft cloth footstep set (4–6 variations); played via `AnimNotify_PlaySound` in `ABP_Hero`

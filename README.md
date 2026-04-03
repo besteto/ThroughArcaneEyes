@@ -9,7 +9,8 @@ The project features a procedural cube-grid environment where the core gameplay 
 * UI Architecture: Common UI (Input Routing) + UMG Viewmodel (Data Binding)
 * Rendering: Post-Process Materials, Global Distance Fields, Stencil Buffers, Substrate Materials
 * Gameplay: GAS (Gameplay Ability System) — Arcane toggle, Mana attribute, Gameplay Tags
-* Animation: First-person arms mesh + procedural camera feel; Arcane float via CharacterMovementComponent tuning
+* Camera: Close over-the-shoulder third-person (`USpringArmComponent`); robed mystery figure full body
+* Animation: Motion Matching (PoseSearch) — grounded locomotion + Arcane weightless float mode
 * World Gen: C++ procedural grid actors (`ATaeGridCube`, `ATaeGridManager`)
 * Workflow: Git (GitHub Actions for CI/CD), Obsidian (Knowledge Management)
 
@@ -40,7 +41,7 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checkli
 |-----|-------|--------|
 | Day 1 | Core Framework | ✅ Done |
 | Day 2 | GAS + Spectral Shaders | ✅ Done |
-| Day 3 | Grid + First-Person Hands | 🔄 In Progress (C++ done, materials + BPs remaining) |
+| Day 3 | Grid + Third-Person Camera | 🔄 In Progress (C++ done, materials + BPs remaining) |
 | Day 4 | Data-Driven UI | ⬜ Not started |
 | Day 5 | Portal & Polish | ⬜ Not started |
 
@@ -48,7 +49,7 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checkli
 
 | Day | Focus | Status |
 |-----|-------|--------|
-| Day 6 | Arms Animation + Camera Feel | ⬜ Not started |
+| Day 6 | Animation (Motion Matching) | ⬜ Not started |
 
 # 📚 Docs
 

@@ -2,25 +2,23 @@
 
 #include "Character/TaeCharacter.h"
 #include "Camera/CameraComponent.h"
-#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "AbilitySystemComponent.h"
 #include "GAS/TaeManaAttributeSet.h"
-#include "GAS/GA_SpectralShift.h"
+#include "Abilities/GameplayAbility.h"
 
 ATaeCharacter::ATaeCharacter()
 {
-	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	FirstPersonCamera->SetupAttachment(GetRootComponent());
-	FirstPersonCamera->SetRelativeLocation(FVector(0.f, 0.f, 60.f)); // eye height
-	FirstPersonCamera->bUsePawnControlRotation = true;
+	// Close over-the-shoulder spring arm — short length, right-shoulder offset
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(GetRootComponent());
+	SpringArm->TargetArmLength = 80.f;
+	SpringArm->SocketOffset = FVector(0.f, 50.f, 20.f); // right of spine, slightly up
+	SpringArm->bUsePawnControlRotation = true;
 
-	ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
-	ArmsMesh->SetupAttachment(FirstPersonCamera);
-	ArmsMesh->bOnlyOwnerSee = true;
-	ArmsMesh->bCastDynamicShadow = false;
-
-	// Hide the full-body mesh from the owning player (arms replace it in first-person)
-	GetMesh()->bOwnerNoSee = true;
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+	FollowCamera->bUsePawnControlRotation = false; // inherits from arm
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	ManaAttributeSet = CreateDefaultSubobject<UTaeManaAttributeSet>(TEXT("ManaAttributeSet"));
@@ -36,5 +34,8 @@ void ATaeCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(UGA_SpectralShift::StaticClass()));
+	if (SpectralShiftAbility)
+	{
+		SpectralShiftHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(SpectralShiftAbility));
+	}
 }

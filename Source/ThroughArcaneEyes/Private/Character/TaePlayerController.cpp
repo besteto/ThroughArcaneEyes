@@ -6,7 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystemComponent.h"
-#include "GAS/GA_SpectralShift.h"
+#include "GAS/TaeGASTypes.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -41,7 +41,7 @@ void ATaePlayerController::SetupInputComponent()
 		EiComp->BindAction(LookAction,          ETriggerEvent::Triggered, this, &ThisClass::DoLook);
 		EiComp->BindAction(JumpAction,          ETriggerEvent::Started,   this, &ThisClass::DoJump);
 		EiComp->BindAction(JumpAction,          ETriggerEvent::Completed, this, &ThisClass::DoStopJumping);
-		EiComp->BindAction(SpectralShiftAction, ETriggerEvent::Started,   this, &ThisClass::DoSpectralShift);
+		EiComp->BindAction(SpectralShiftAction, ETriggerEvent::Started, this, &ThisClass::DoSpectralShift);
 	}
 	else
 	{
@@ -93,20 +93,14 @@ void ATaePlayerController::DoSpectralShift(const FInputActionInstance& Action)
 	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
 	if (!ASC) return;
 
-	static const FGameplayTag ArcaneTag = FGameplayTag::RequestGameplayTag(FName("Arcane.Vision"));
-	if (ASC->HasMatchingGameplayTag(ArcaneTag))
+	const FGameplayAbilitySpecHandle Handle = OwnerCharacter->GetSpectralShiftHandle();
+	if (ASC->HasMatchingGameplayTag(TAG_Arcane_Vision))
 	{
-		if (const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromClass(UGA_SpectralShift::StaticClass()))
-		{
-			if (UGameplayAbility* Instance = Spec->GetPrimaryInstance())
-			{
-				ASC->CancelAbility(Instance);
-			}
-		}
+		ASC->CancelAbilityHandle(Handle);
 	}
 	else
 	{
-		ASC->TryActivateAbilityByClass(UGA_SpectralShift::StaticClass());
+		ASC->TryActivateAbility(Handle);
 	}
 }
 

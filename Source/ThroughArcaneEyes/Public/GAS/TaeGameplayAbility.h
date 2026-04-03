@@ -1,26 +1,26 @@
-﻿// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
+// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GAS/TaeGameplayAbility.h"
-#include "GA_SpectralShift.generated.h"
+#include "Abilities/GameplayAbility.h"
+#include "TaeGameplayAbility.generated.h"
 
-class UInputMappingContext;
-
-UCLASS()
-class THROUGHARCANEEYES_API UGA_SpectralShift : public UTaeGameplayAbility
+UCLASS(Abstract)
+class THROUGHARCANEEYES_API UTaeGameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
 
-public:
-	UGA_SpectralShift();
-
+protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
-protected:
-	// Assign IMC_Arcane in BP_GA_SpectralShift
+	// Auto-end after this many seconds; 0 = player must cancel manually
 	UPROPERTY(EditDefaultsOnly, Category = "Tae")
-	TObjectPtr<UInputMappingContext> ArcaneInputContext;
+	float AbilityDuration = 0.f;
+
+private:
+	void OnDurationExpired();
+
+	FTimerHandle DurationHandle;
 };

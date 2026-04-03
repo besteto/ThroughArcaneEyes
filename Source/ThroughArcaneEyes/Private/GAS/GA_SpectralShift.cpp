@@ -1,6 +1,7 @@
 ﻿// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
 
 #include "GAS/GA_SpectralShift.h"
+#include "GAS/TaeGASTypes.h"
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/PlayerController.h"
@@ -16,7 +17,7 @@ void UGA_SpectralShift::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 	// Grant Arcane.Vision tag
 	FGameplayTagContainer Tags;
-	Tags.AddTag(FGameplayTag::RequestGameplayTag(FName("Arcane.Vision")));
+	Tags.AddTag(TAG_Arcane_Vision);
 	ActorInfo->AbilitySystemComponent->AddLooseGameplayTags(Tags);
 
 	// Push Arcane input context
@@ -36,7 +37,7 @@ void UGA_SpectralShift::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 {
 	// Remove Arcane.Vision tag
 	FGameplayTagContainer Tags;
-	Tags.AddTag(FGameplayTag::RequestGameplayTag(FName("Arcane.Vision")));
+	Tags.AddTag(TAG_Arcane_Vision);
 	ActorInfo->AbilitySystemComponent->RemoveLooseGameplayTags(Tags);
 
 	// Pop Arcane input context

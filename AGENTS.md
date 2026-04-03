@@ -106,15 +106,10 @@ Delegates in use: `FOnArcaneStateChanged` on `UTaeStateComponent` (`DECLARE_DYNA
 
 ## Camera
 
-`ATaeCharacter` owns a single `UCameraComponent` (`FirstPersonCamera`):
-- Attached to root component
-- `SetRelativeLocation(FVector(0, 0, 60))` — eye height
-- `bUsePawnControlRotation = true`
-
-`ArmsMesh` (`USkeletalMeshComponent`) is attached to `FirstPersonCamera`:
-- `bOnlyOwnerSee = true`, `bCastDynamicShadow = false`
-- Full-body `GetMesh()` has `bOwnerNoSee = true`
-- Mesh and `ABP_Arms` are assigned in `BP_Hero`
+`ATaeCharacter` uses a close over-the-shoulder third-person camera:
+- `SpringArm` (`USpringArmComponent`) attached to root; `TargetArmLength = 80`, `SocketOffset = (0, 50, 20)`, `bUsePawnControlRotation = true`
+- `FollowCamera` (`UCameraComponent`) attached to `SpringArm` socket; `bUsePawnControlRotation = false`
+- Defaults are set in C++; fine-tune arm length and offset in `BP_Hero` Details
 
 ---
 
