@@ -1,7 +1,7 @@
 # Project: Through Arcane Eyes (UE 5.7)
 "Through Arcane Eyes" is a technical vertical slice developed in Unreal Engine 5.7. It serves as a portfolio demonstration of high-level C++ architecture, modern UI patterns (MVVM + Common UI), and advanced shader techniques.
 
-The project features a procedural cube-grid environment where the core gameplay loop revolves around a "Spectral Shift" mechanic—toggling a magical vision mode to reveal hidden geometry and navigate a fractured world.
+You play as **Ant** — a humanoid living tree, roots for legs and branches for arms — stranded in a ruined factory world of floating cube islands. The land is broken, rusted, and overgrown. By activating **Arcane Vision** (the Spectral Shift), Ant perceives what could exist: hidden geometry, dormant connections, paths yet to grow. The goal is to restore the land — crossing and linking the separated islands by growing roots, vines, and trees between them.
 
 # 🛠 Technology Stack
 * Engine: Unreal Engine 5.7 (C++ 20)
@@ -9,8 +9,8 @@ The project features a procedural cube-grid environment where the core gameplay 
 * UI Architecture: Common UI (Input Routing) + UMG Viewmodel (Data Binding)
 * Rendering: Post-Process Materials, Global Distance Fields, Stencil Buffers, Substrate Materials
 * Gameplay: GAS (Gameplay Ability System) — Arcane toggle, Mana attribute, Gameplay Tags
-* Camera: Close over-the-shoulder third-person (`USpringArmComponent`); robed mystery figure full body
-* Animation: Motion Matching (PoseSearch) — grounded locomotion + Arcane weightless float mode
+* Camera: Close over-the-shoulder third-person (`USpringArmComponent`)
+* Animation: Motion Matching (PoseSearch) — tree locomotion (root gait) + Arcane root-reach/extend poses
 * World Gen: C++ procedural grid actors (`ATaeGridCube`, `ATaeGridManager`)
 * Workflow: Git (GitHub Actions for CI/CD), Obsidian (Knowledge Management)
 
@@ -28,8 +28,8 @@ The HUD does not use Tick or standard Event Construct binding.
 * Common UI: Used for the "Victory" and "Pause" menus to manage input focus and UI layering automatically.
 
 ## 3. The "Spectral" Rendering Pipeline
-* The Vision: A custom Post-Process pass using a Sobel-Edge detection algorithm.
-* The Hidden Path: Actors utilize Gameplay Tags and Custom Depth Stencils. When the "Arcane" state is broadcast, these actors toggle their visibility and collision via a centralized StateComponent.
+* The Vision: A custom Post-Process pass — animated plasma overlay with DDX/DDY depth edge detection and chromatic aberration — activates when Arcane Vision is toggled.
+* The Hidden Path: Actors use Gameplay Tags and a centralized `UTaeStateComponent`. When the `Arcane.Vision` tag is granted, hidden cube islands toggle their visibility and collision — revealing the dormant land Ant must restore.
 
 # 📅 Development Roadmap
 
@@ -41,7 +41,7 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checkli
 |-----|-------|--------|
 | Day 1 | Core Framework | ✅ Done |
 | Day 2 | GAS + Spectral Shaders | ✅ Done |
-| Day 3 | Grid + Third-Person Camera | 🔄 In Progress (C++ done, materials + BPs remaining) |
+| Day 3 | Grid + Third-Person Camera | ✅ Done |
 | Day 4 | Data-Driven UI | ⬜ Not started |
 | Day 5 | Portal & Polish | ⬜ Not started |
 
@@ -62,8 +62,10 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checkli
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Commit format, code style, naming conventions |
 | [AGENTS.md](AGENTS.md) | Guide for AI agents working in this codebase |
 
-# 📝 Design Document: The "Arcane" Logic
-Note to Recruiters: This project prioritizes Code Scalability. Instead of using simple booleans for the magic state, I implemented a Gameplay Tag Container. This allows the system to support multiple "vision modes" (e.g., Thermal, Chronal, Arcane) without modifying the base actor code.
+# 📝 Design Note: The "Arcane" Logic
+Arcane Vision is the mechanical expression of Ant's nature — a living thing that senses the latent life in a dead world. In normal mode the factory islands look rusted and disconnected; through Arcane Eyes, the hidden geometry of what *could grow* becomes visible and physical.
+
+**Note to Recruiters:** The vision state is driven by a Gameplay Tag Container (`Arcane.Vision`), not a boolean. This means the system naturally supports additional modes (Thermal, Chronal, etc.) without touching base actor code — each mode is just a new tag + a new `GA_` ability that grants it.
 
 # 🚀 How to Run
 * Clone the repository.

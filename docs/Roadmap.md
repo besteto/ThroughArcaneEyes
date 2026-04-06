@@ -9,7 +9,7 @@
 |-----|-------|-------------|--------|
 | Day 1 | Core Framework | C++ Character/Controller + Enhanced Input | ✅ Done |
 | Day 2 | GAS + Spectral Shaders | GAS Foundation + Arcane Toggle + Post-Process | ✅ Done |
-| Day 3 | Grid + Camera | `ATaeGridCube` + `ATaeGridManager` + over-shoulder camera | 🔄 In Progress |
+| Day 3 | Grid + Camera | `ATaeGridCube` + `ATaeGridManager` + over-shoulder camera | ✅ Done |
 | Day 4 | Data-Driven UI | MVVM Viewmodel + Common UI HUD + Grid DataTable | ⬜ Not started |
 | Day 5 | Portal & Polish | Render-to-Texture Portal + Win Condition UI | ⬜ Not started |
 
@@ -54,11 +54,11 @@
 
 ### Materials / Rendering
 - `M_SpectralEdge` — animated plasma overlay; DDX/DDY depth edge mask; `Floor(Time)` stepped animation
-- `BP_SpectralVolume` — Infinite Extent post-process volume; disabled by default; toggled by `BP_GA_SpectralShift`
+- `BP_SpectralVolume` — Infinite Extent post-process volume; chromatic aberration; disabled by default; toggled by `BP_GA_SpectralShift`
 
 ---
 
-## Day 3 — Grid + First-Person Hands
+## Day 3 — Grid + Camera ✅
 
 **Goal:** Procedural cube grid loads and reacts to Arcane Vision. Close over-shoulder third-person camera. Devlog gif ready.
 
@@ -68,15 +68,15 @@
 - [x] Collision toggle — `ATaeGridCube` sets `ECollisionEnabled::NoCollision` when hidden, restores on Arcane off
 - [x] `ATaeCharacter` — `USpringArmComponent` + `UCameraComponent` close over-shoulder setup (replaces first-person camera)
 
-### Materials (Substrate)
-> Substrate is already enabled in `DefaultEngine.ini`. Two separate materials swapped by `ATaeGridCube` via `UStaticMeshComponent::SetMaterial()` on `OnStateChanged`.
-- [ ] `M_GridCube_Forest` — default world state; Substrate opaque slab, organic greens and rock tones
-- [ ] `M_GridCube_Arcane` — Arcane vision state; Substrate translucent slab with emissive layer for glow effect
+### Materials
+> Two separate materials swapped by `ATaeGridCube` via `UStaticMeshComponent::SetMaterial()` on `OnStateChanged`.
+- [x] `M_GridCube_Forest` — default world state; Surface opaque, organic greens and rock tones
+- [x] `M_GridCube_Arcane` — Arcane vision state; Surface translucent with emissive glow
 
 ### Editor
-- [ ] `BP_GridCube` → parent `ATaeGridCube`; assign mesh + Substrate materials
-- [ ] `BP_GridManager` — place in level; set grid dimensions
-- [ ] `BP_Hero` — verify spring arm length + socket offset in viewport
+- [x] `BP_GridCube` → parent `ATaeGridCube`; test cube mesh + materials assigned (rework planned with detailed materials)
+- [x] `BP_GridManager` — placed in level
+- [x] `BP_Hero` — tree skeletal mesh + animation assigned
 
 ---
 
@@ -126,6 +126,11 @@
 - [ ] `S_Victory` — short magical flourish triggered on win condition
 - [ ] Music crossfade logic — `UAudioComponent` pair on `BP_TaeHud`; faded via `UTaeStateComponent::OnArcaneStateChanged`
 
+### Substrate Upgrade
+- [x] `M_GridCube_Forest` → Substrate opaque slab
+- [x] `M_GridCube_Arcane` → Substrate translucent slab with emissive layer
+- [x] `M_SpectralEdge` — verified and converted to Substrate
+
 ### Polish
 - [ ] Screen-space vignette flash when Spectral Shift activates
 - [ ] `DefaultGame.ini` `ProjectVersion` bump to `0.1.0`
@@ -134,7 +139,7 @@
 
 ## Day 6 — Animation (Motion Matching)
 
-**Goal:** Character movement feels grounded in normal mode and weightless/magical in Arcane mode, driven by Motion Matching. Robed figure benefits from cloth sim + drift.
+**Goal:** Ant's movement feels heavy and rooted in normal mode, reaching and extending in Arcane mode. Motion Matching drives both states from separate pose databases.
 
 > Depends on Day 2 (`GameplayTag.Arcane.Vision` used to blend between databases).
 
@@ -143,15 +148,15 @@
 - [ ] Add `PoseSearch` to `Build.cs` public deps
 
 ### Pose Databases
-- [ ] `PSD_Locomotion` — normal movement; idle, walk, run, jump; grounded forest traversal feel
-- [ ] `PSD_ArcaneFloat` — Arcane mode; slow drift, hover idle, gliding; no hard foot plant
+- [ ] `PSD_Locomotion` — normal movement; heavy root-gait walk, idle sway, grounded feel
+- [ ] `PSD_ArcaneReach` — Arcane mode; root-reach/extend poses, slow deliberate movement, no hard foot plant
 
 ### C++
 - [ ] `ATaeCharacter` — expose `bArcaneActive` for the Animation Blueprint (via ASC tag query)
 - [ ] Tune `UCharacterMovementComponent` for Arcane mode — reduced gravity scale, increased air control, lower max walk speed; applied/removed by `UGA_SpectralShift`
 
 ### Editor
-- [ ] `ABP_Hero` Animation Blueprint — Motion Matching node selecting between `PSD_Locomotion` and `PSD_ArcaneFloat` based on `bArcaneActive`
+- [ ] `ABP_Hero` Animation Blueprint — Motion Matching node selecting between `PSD_Locomotion` and `PSD_ArcaneReach` based on `bArcaneActive`
 - [ ] Blend time between databases (suggested: 0.3–0.5s) to avoid snapping on toggle
 - [ ] Assign `ABP_Hero` to `BP_Hero` skeletal mesh
-- [ ] `S_Footstep_Robe` — soft cloth footstep set (4–6 variations); played via `AnimNotify_PlaySound` in `ABP_Hero`
+- [ ] `S_Footstep_Root` — heavy root footstep set (4–6 variations); played via `AnimNotify_PlaySound` in `ABP_Hero`
