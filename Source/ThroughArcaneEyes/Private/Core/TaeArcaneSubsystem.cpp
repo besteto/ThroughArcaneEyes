@@ -1,12 +1,12 @@
 // Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
 
-#include "Core/TaeVisualSubsystem.h"
+#include "Core/TaeArcaneSubsystem.h"
 #include "Core/TaeGameInstance.h"
 #include "Engine/PostProcessVolume.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-void UTaeVisualSubsystem::OnWorldBeginPlay(UWorld& InWorld)
+void UTaeArcaneSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
@@ -35,7 +35,7 @@ void UTaeVisualSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	}
 }
 
-void UTaeVisualSubsystem::SetArcaneActive(bool bActive)
+void UTaeArcaneSubsystem::SetArcaneActive(bool bActive)
 {
 	bVolumeActive = bActive;
 
@@ -48,7 +48,7 @@ void UTaeVisualSubsystem::SetArcaneActive(bool bActive)
 	FlashVignette();
 }
 
-void UTaeVisualSubsystem::FlashVignette(float Duration)
+void UTaeArcaneSubsystem::FlashVignette(float Duration)
 {
 	if (!SpectralVolume) return;
 
@@ -64,19 +64,19 @@ void UTaeVisualSubsystem::FlashVignette(float Duration)
 	World->GetTimerManager().SetTimer(
 		VignetteTimerHandle,
 		this,
-		&UTaeVisualSubsystem::ClearVignetteFlash,
+		&UTaeArcaneSubsystem::ClearVignetteFlash,
 		Duration,
 		false
 	);
 }
 
-void UTaeVisualSubsystem::ClearVignetteFlash()
+void UTaeArcaneSubsystem::ClearVignetteFlash()
 {
 	if (!SpectralVolume) return;
 	SpectralVolume->Settings.VignetteIntensity = 0.f;
 }
 
-void UTaeVisualSubsystem::CrossfadeMusic(bool bToArcane)
+void UTaeArcaneSubsystem::CrossfadeMusic(bool bToArcane)
 {
 	UTaeGameInstance* GI = GetWorld()->GetGameInstance<UTaeGameInstance>();
 	const float FadeTime = GI ? GI->GetMusicCrossfadeDuration() : 1.f;

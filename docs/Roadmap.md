@@ -110,7 +110,7 @@
 
 ### C++
 - [x] `ATaePortal` — Actor with `USphereComponent` trigger; overlap calls `ATaeHud::ShowVictoryScreen()`
-- [x] `UTaeVisualSubsystem` (`UWorldSubsystem`) — auto-finds `APostProcessVolume` in `OnWorldBeginPlay`; `SetArcaneActive` toggles volume + crossfades music; `FlashVignette` spikes vignette intensity then fades
+- [x] `UTaeArcaneSubsystem` (`UWorldSubsystem`) — auto-finds `APostProcessVolume` in `OnWorldBeginPlay`; `SetArcaneActive` toggles volume + crossfades music; `FlashVignette` spikes vignette intensity then fades
 - [x] `UTaeGameInstance` — `Music_Forest`, `Music_Arcane` (EditDefaultsOnly), `MusicCrossfadeDuration`; `GA_SpectralShift` calls subsystem instead of holding direct PP reference
 - [ ] `ATaePortal` render-to-texture — `USceneCaptureComponent2D` + `UTextureRenderTarget2D` (deferred, not needed for win condition)
 
@@ -126,7 +126,7 @@
 - [ ] `Music_Arcane` — ethereal loop (Arcane mode); crossfades with `Music_Forest` on `Arcane.Vision` tag change
 - [ ] `S_Portal_Ambience` — dimensional hum loop; `UAudioComponent` on `BP_Portal`
 - [ ] `S_Victory` — short magical flourish triggered on win condition
-- [x] Music crossfade logic — `UAudioComponent` pair in `UTaeVisualSubsystem`; spawned in `OnWorldBeginPlay`; crossfaded via `SetArcaneActive`
+- [x] Music crossfade logic — `UAudioComponent` pair in `UTaeArcaneSubsystem`; spawned in `OnWorldBeginPlay`; crossfaded via `SetArcaneActive`
 
 ### Substrate Upgrade
 - [x] `M_GridCube_Forest` → Substrate opaque slab
@@ -134,7 +134,7 @@
 - [x] `M_SpectralEdge` — verified and converted to Substrate
 
 ### Polish
-- [x] Screen-space vignette flash when Spectral Shift activates — `UTaeVisualSubsystem::FlashVignette()`
+- [x] Screen-space vignette flash when Spectral Shift activates — `UTaeArcaneSubsystem::FlashVignette()`
 - [ ] `DefaultGame.ini` `ProjectVersion` bump to `0.1.0`
 - [ ] `M_GridCube_Forest` texture upgrade — replace Voronoi with tiling rust + moss textures + normal maps
 
