@@ -55,7 +55,8 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checkli
 
 | File | Contents |
 |------|----------|
-| [docs/Roadmap.md](docs/Roadmap.md) | 5-day sprint plan + per-day checklists |
+| [docs/Roadmap.md](docs/Roadmap.md) | Sprint plan + per-day checklists |
+| [docs/HierarchicalIsland.md](docs/HierarchicalIsland.md) | Days 7–8 design: `ATaeIsland`, `ATaeWorldManager`, archetype DataTable |
 | [docs/Architecture.md](docs/Architecture.md) | Class hierarchy, module deps, data-flow diagrams |
 | [docs/SpectralVision.md](docs/SpectralVision.md) | Spectral Shift system: GameplayTags, StateComponent, Post-Process pipeline |
 | [docs/UIArchitecture.md](docs/UIArchitecture.md) | MVVM ViewModel, Common UI stack, widget conventions |

@@ -1,6 +1,7 @@
 ﻿// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
 
 #include "Components/TaeStateComponent.h"
+#include "GAS/TaeGASTypes.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -38,8 +39,7 @@ void UTaeStateComponent::BeginPlay()
 
 	if (UAbilitySystemComponent* ASC = FindRelevantASC(GetOwner()))
 	{
-		const FGameplayTag ArcaneTag = FGameplayTag::RequestGameplayTag(FName("Arcane.Vision"));
-		ASC->RegisterGameplayTagEvent(ArcaneTag, EGameplayTagEventType::AnyCountChange)
+		ASC->RegisterGameplayTagEvent(TAG_Arcane_Vision, EGameplayTagEventType::AnyCountChange)
 			.AddUObject(this, &UTaeStateComponent::OnArcaneTagChanged);
 	}
 	else

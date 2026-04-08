@@ -33,6 +33,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Tae")
 	TObjectPtr<UInputAction> SpectralShiftAction;
 
+	UPROPERTY(EditAnywhere, Category = "Tae")
+	TObjectPtr<UInputAction> PauseAction;
+
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 	virtual void SetPawn(APawn* InPawn) override;
@@ -45,8 +48,12 @@ protected:
 	void DoLook(const FInputActionInstance& Action);
 	void DoJump(const FInputActionInstance& Action);
 	void DoStopJumping(const FInputActionInstance& Action);
-
 	void DoSpectralShift(const FInputActionInstance& Action);
+	void DoPause(const FInputActionInstance& Action);
+
+	// Implemented in BP_TaePlayerController — opens WBP_PauseMenu
+	UFUNCTION(BlueprintImplementableEvent, Category = "Tae")
+	void OnPauseRequested();
 
 private:
 	UPROPERTY(Transient)
