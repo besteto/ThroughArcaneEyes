@@ -10,7 +10,7 @@
 | Day 1 | Core Framework | C++ Character/Controller + Enhanced Input | ✅ Done |
 | Day 2 | GAS + Spectral Shaders | GAS Foundation + Arcane Toggle + Post-Process | ✅ Done |
 | Day 3 | Grid + Camera | `ATaeGridCube` + `ATaeGridManager` + over-shoulder camera | ✅ Done |
-| Day 4 | Data-Driven UI | MVVM Viewmodel + Common UI HUD + Grid DataTable | ⬜ Not started |
+| Day 4 | Data-Driven UI | MVVM Viewmodel + Common UI HUD + Grid DataTable | ✅ Done |
 | Day 5 | Portal & Polish | Render-to-Texture Portal + Win Condition UI | ⬜ Not started |
 
 ### Sprint 2 — Enhancement
@@ -19,6 +19,8 @@
 | Day | Focus | Deliverable | Status |
 |-----|-------|-------------|--------|
 | Day 6 | Animation (Motion Matching) | Motion Matching locomotion + Arcane float + footsteps | ⬜ Not started |
+| Day 7 | Hierarchical World System | `ATaeIsland` + `FTaeIslandArchetype` + DataTable-driven spawning | ⬜ Not started |
+| Day 8 | World Manager & Connections | `ATaeWorldManager` + hidden root-paths between islands | ⬜ Not started |
 
 ---
 
@@ -84,23 +86,20 @@
 
 **Goal:** HUD reacts to mana/vision state with zero Tick usage. Grid layout driven by DataTable.
 
-### C++ — Grid config
-- [ ] `FTaeGridRow` struct — `USTRUCT`; fields: `GridPosition (FIntVector)`, `bStartHidden (bool)`
-- [ ] `DT_GridLayout` DataTable using `FTaeGridRow` — defines which cubes start hidden
-- [ ] `ATaeGridManager` — wire to read from `DT_GridLayout`; fall back to procedural fill if table is empty
-
-### C++ — MVVM
-- [ ] `UTaeHudViewModel` — extends `UMVVMViewModelBase`; exposes `Mana` (float) and `bArcaneActive` (bool) with `FIELD_NOTIFY`
-- [ ] `UTaeGameInstance` — owns and initialises `UTaeHudViewModel`
-- [ ] Connect `UTaeStateComponent::OnStateChanged` → ViewModel setter
+### C++ — MVVM (complete)
+- [x] `ModelViewViewModel` added to `Build.cs`; `UTaeStateComponent` migrated to `TAG_Arcane_Vision` native tag
+- [x] `UTaeHudViewModel` — `UMVVMViewModelBase`; `Mana` (float) + `bArcaneActive` (bool) with `FieldNotify`; setters use `UE_MVVM_SET_PROPERTY_VALUE`
+- [x] `UTaeGameInstance` — creates and owns `UTaeHudViewModel` in `Init()`; `GetHudViewModel()` exposed as `BlueprintCallable`
+- [x] `ATaePlayerController::SetPawn` — wires ASC tag + Mana attribute delegates → ViewModel via `AddWeakLambda`; pushes initial values on possession
+- [x] `ATaeHud` — `HudWidgetClass` (`TSubclassOf<UUserWidget>`); creates and adds `WBP_HUD` to player screen in `BeginPlay`
 
 ### Editor / UMG
-- [ ] `WBP_HUD` — main UMG widget; binds to `UTaeHudViewModel` via MVVM binding panel (no `Tick`)
-- [ ] `WBP_PauseMenu` — Common UI `UCommonActivatableWidget`; handles input focus automatically
-- [ ] `WBP_VictoryScreen` — Common UI activatable; triggered by win condition
+- [x] `WBP_HUD` — View Bindings: `ManaText` → `TextBlock.Text`, `ArcaneVisibility` → widget visibility; Event Construct sets ViewModel from GameInstance
+- [x] `BP_TaeHud` — `WBP_HUD` assigned to `HudWidgetClass`
+- [x] `WBP_PauseMenu` — `UTaeActivatableWidget`; Escape via `IA_Pause` → `ATaeHud::TogglePauseMenu`
+- [x] `WBP_VictoryScreen` — `UTaeActivatableWidget`; "To Main Screen" → `ATaeHud::ShowMainMenu`
+- [x] `UTaeActivatableWidget` — base class; auto collapse/visible on deactivate/activate; `WBP_MainMenu`, `WBP_PauseMenu`, `WBP_VictoryScreen` all inherit
 
-### Config
-- [ ] Add `CommonUI` and `ModelViewViewModel` to `ThroughArcaneEyes.Build.cs` public deps
 
 ---
 
@@ -160,3 +159,23 @@
 - [ ] Blend time between databases (suggested: 0.3–0.5s) to avoid snapping on toggle
 - [ ] Assign `ABP_Hero` to `BP_Hero` skeletal mesh
 - [ ] `S_Footstep_Root` — heavy root footstep set (4–6 variations); played via `AnimNotify_PlaySound` in `ABP_Hero`
+
+---
+
+## Day 7 — Hierarchical World System
+
+**Goal:** Replace manual island placement with a data-driven, modular system. Full proposal in `docs/HierarchicalIsland.txt`.
+
+- [ ] `ATaeIsland` — replaces `ATaeGridManager`; owns `UTaeStateComponent`; spawns cube grid from archetype; broadcasts state to child cubes directly (cubes no longer register with GAS themselves)
+- [ ] `FTaeIslandArchetype` — `USTRUCT` DataTable row; fields: `GridDimensions`, `DecayFactor` (float 0–1), `bIsPuzzleIsland`
+- [ ] `DT_IslandArchetypes` — DataTable of island archetypes (e.g. Rusty Factory, Mossy Overgrowth)
+- [ ] `DecayFactor` spawning — roll against `FRandomStream` seed; spawn `BP_GridCube` or skip/replace with junk mesh
+- [ ] Per-archetype material override — Island passes archetype materials to each spawned GridCube at spawn time
+
+## Day 8 — World Manager & Connections
+
+**Goal:** Top-level manager tracks all islands and the hidden root-paths between them.
+
+- [ ] `ATaeWorldManager` — one per level; holds references to all `ATaeIsland` actors + hidden connection path data
+- [ ] Connection paths hidden by default; revealed (visibility + collision) when `Arcane.Vision` tag is active
+- [ ] `BP_IndustrialJunk` — Nanite-enabled junk mesh actor; spawned by Island when `DecayFactor` roll fails

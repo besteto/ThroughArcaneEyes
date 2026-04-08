@@ -15,7 +15,7 @@ public class ThroughArcaneEyes : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] { "EnhancedInput" });
 
 		// UI
-		PublicDependencyModuleNames.AddRange(new string[] { "UMG", "CommonUI" });
+		PublicDependencyModuleNames.AddRange(new string[] { "UMG", "CommonUI", "ModelViewViewModel" });
 
 		// GAS
 		PublicDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "GameplayTags", "GameplayTasks" });

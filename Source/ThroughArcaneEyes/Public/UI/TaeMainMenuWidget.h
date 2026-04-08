@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonActivatableWidget.h"
+#include "UI/TaeActivatableWidget.h"
 #include "TaeMainMenuWidget.generated.h"
 
 UCLASS(Abstract)
-class THROUGHARCANEEYES_API UTaeMainMenuWidget : public UCommonActivatableWidget
+class THROUGHARCANEEYES_API UTaeMainMenuWidget : public UTaeActivatableWidget
 {
 	GENERATED_BODY()
 };
