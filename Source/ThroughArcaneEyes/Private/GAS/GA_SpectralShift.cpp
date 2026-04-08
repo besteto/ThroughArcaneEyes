@@ -2,6 +2,7 @@
 
 #include "GAS/GA_SpectralShift.h"
 #include "GAS/TaeGASTypes.h"
+#include "Core/TaeVisualSubsystem.h"
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/PlayerController.h"
@@ -31,6 +32,11 @@ void UGA_SpectralShift::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			}
 		}
 	}
+
+	if (UTaeVisualSubsystem* Visual = GetWorld()->GetSubsystem<UTaeVisualSubsystem>())
+	{
+		Visual->SetArcaneActive(true);
+	}
 }
 
 void UGA_SpectralShift::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -50,6 +56,11 @@ void UGA_SpectralShift::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 				EiSys->RemoveMappingContext(ArcaneInputContext);
 			}
 		}
+	}
+
+	if (UTaeVisualSubsystem* Visual = GetWorld()->GetSubsystem<UTaeVisualSubsystem>())
+	{
+		Visual->SetArcaneActive(false);
 	}
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);

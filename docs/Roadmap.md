@@ -11,7 +11,7 @@
 | Day 2 | GAS + Spectral Shaders | GAS Foundation + Arcane Toggle + Post-Process | ✅ Done |
 | Day 3 | Grid + Camera | `ATaeGridCube` + `ATaeGridManager` + over-shoulder camera | ✅ Done |
 | Day 4 | Data-Driven UI | MVVM Viewmodel + Common UI HUD + Grid DataTable | ✅ Done |
-| Day 5 | Portal & Polish | Render-to-Texture Portal + Win Condition UI | ⬜ Not started |
+| Day 5 | Portal & Polish | Render-to-Texture Portal + Win Condition UI | 🔄 In progress |
 
 ### Sprint 2 — Enhancement
 *Optional. Adds depth and polish once the core slice is complete.*
@@ -68,6 +68,7 @@
 - [x] `ATaeGridCube` — Actor with `UStaticMeshComponent` + `UTaeStateComponent`; responds to `OnStateChanged`
 - [x] `ATaeGridManager` — spawns an N×M×K grid of `ATaeGridCube` from configurable `UPROPERTY` dimensions; no DataTable yet
 - [x] Collision toggle — `ATaeGridCube` sets `ECollisionEnabled::NoCollision` when hidden, restores on Arcane off
+- [ ] Mesh collision — deferred; placeholder meshes are complex shapes; add box/convex collision per mesh when final assets are ready
 - [x] `ATaeCharacter` — `USpringArmComponent` + `UCameraComponent` close over-shoulder setup (replaces first-person camera)
 
 ### Materials
@@ -108,8 +109,10 @@
 **Goal:** Functional end-portal with render-to-texture view; win condition triggers Victory screen.
 
 ### C++
-- [ ] `ATaePortal` — Actor with `USceneCaptureComponent2D` rendering to a `UTextureRenderTarget2D`
-- [ ] Win condition — overlap trigger calls `UTaeGameInstance` → activates `WBP_VictoryScreen`
+- [x] `ATaePortal` — Actor with `USphereComponent` trigger; overlap calls `ATaeHud::ShowVictoryScreen()`
+- [x] `UTaeVisualSubsystem` (`UWorldSubsystem`) — auto-finds `APostProcessVolume` in `OnWorldBeginPlay`; `SetArcaneActive` toggles volume + crossfades music; `FlashVignette` spikes vignette intensity then fades
+- [x] `UTaeGameInstance` — `Music_Forest`, `Music_Arcane` (EditDefaultsOnly), `MusicCrossfadeDuration`; `GA_SpectralShift` calls subsystem instead of holding direct PP reference
+- [ ] `ATaePortal` render-to-texture — `USceneCaptureComponent2D` + `UTextureRenderTarget2D` (deferred, not needed for win condition)
 
 ### Materials
 - [ ] `M_Portal` — samples `UTextureRenderTarget2D`; distortion/chromatic aberration pass
@@ -123,7 +126,7 @@
 - [ ] `Music_Arcane` — ethereal loop (Arcane mode); crossfades with `Music_Forest` on `Arcane.Vision` tag change
 - [ ] `S_Portal_Ambience` — dimensional hum loop; `UAudioComponent` on `BP_Portal`
 - [ ] `S_Victory` — short magical flourish triggered on win condition
-- [ ] Music crossfade logic — `UAudioComponent` pair on `BP_TaeHud`; faded via `UTaeStateComponent::OnArcaneStateChanged`
+- [x] Music crossfade logic — `UAudioComponent` pair in `UTaeVisualSubsystem`; spawned in `OnWorldBeginPlay`; crossfaded via `SetArcaneActive`
 
 ### Substrate Upgrade
 - [x] `M_GridCube_Forest` → Substrate opaque slab
@@ -131,8 +134,9 @@
 - [x] `M_SpectralEdge` — verified and converted to Substrate
 
 ### Polish
-- [ ] Screen-space vignette flash when Spectral Shift activates
+- [x] Screen-space vignette flash when Spectral Shift activates — `UTaeVisualSubsystem::FlashVignette()`
 - [ ] `DefaultGame.ini` `ProjectVersion` bump to `0.1.0`
+- [ ] `M_GridCube_Forest` texture upgrade — replace Voronoi with tiling rust + moss textures + normal maps
 
 ---
 
