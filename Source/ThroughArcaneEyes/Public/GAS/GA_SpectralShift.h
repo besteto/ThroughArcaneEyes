@@ -23,4 +23,5 @@ protected:
 	// Assign IMC_Arcane in BP_GA_SpectralShift
 	UPROPERTY(EditDefaultsOnly, Category = "Tae")
 	TObjectPtr<UInputMappingContext> ArcaneInputContext;
+
 };
