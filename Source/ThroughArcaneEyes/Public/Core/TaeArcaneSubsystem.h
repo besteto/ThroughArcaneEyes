@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "TaeVisualSubsystem.generated.h"
+#include "TaeArcaneSubsystem.generated.h"
 
 class APostProcessVolume;
 class UAudioComponent;
 class USoundBase;
 
 UCLASS()
-class THROUGHARCANEEYES_API UTaeVisualSubsystem : public UWorldSubsystem
+class THROUGHARCANEEYES_API UTaeArcaneSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
