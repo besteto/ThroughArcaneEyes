@@ -42,14 +42,17 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checkli
 | Day 1 | Core Framework | ✅ Done |
 | Day 2 | GAS + Spectral Shaders | ✅ Done |
 | Day 3 | Grid + Third-Person Camera | ✅ Done |
-| Day 4 | Data-Driven UI | ⬜ Not started |
-| Day 5 | Portal & Polish | ⬜ Not started |
+| Day 4 | Data-Driven UI | ✅ Done |
+| Day 5 | Portal & Polish | 🔄 In progress |
 
 **Sprint 2 — Enhancement** *(optional)*
 
 | Day | Focus | Status |
 |-----|-------|--------|
 | Day 6 | Animation (Motion Matching) | ⬜ Not started |
+| Day 7 | Hierarchical World System | ⬜ Not started |
+| Day 8 | World Manager & Connections | ⬜ Not started |
+| Day 9 | Audio & SFX | ⬜ Not started |
 
 # 📚 Docs
 
