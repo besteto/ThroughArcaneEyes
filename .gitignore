@@ -12,6 +12,7 @@ Saved/
 # Plugins (auto-installed, not custom)
 Plugins/VisualStudioTools/
 *.sln
+*.slnx
 *.suo
 *.user
 *.opensdf
