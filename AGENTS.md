@@ -102,6 +102,8 @@ No `BlueprintNativeEvent` or `BlueprintImplementableEvent` is used yet. Current 
 
 Delegates in use: `FOnArcaneStateChanged` on `UTaeStateComponent` (`DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam`, `BlueprintAssignable`). Follow this pattern for all future delegates.
 
+**Dynamic per-instance components (`ATaeClutterScatter`, `ATaeRootPath`):** when the number of child components depends on per-placement data (a mesh pool, a spline's point count) rather than being fixed at compile time, create them in `OnConstruction` instead of the constructor — `NewObject<T>(this)` → `SetupAttachment` → `RegisterComponent()` → `AddInstanceComponent()`. Destroy and rebuild on every call so editor edits preview live. `CreateDefaultSubobject` remains the default for everything with a fixed component count.
+
 ---
 
 ## Camera
