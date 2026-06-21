@@ -19,8 +19,8 @@
 | Day | Focus | Deliverable | Status |
 |-----|-------|-------------|--------|
 | Day 6 | Animation (Motion Matching) | Motion Matching locomotion + Arcane float + footsteps | 🔄 In progress |
-| Day 7 | Hierarchical World System | `ATaeIsland` + `FTaeIslandArchetype` + DataTable-driven spawning | ⬜ Not started |
-| Day 8 | World Manager & Connections | `ATaeWorldManager` + hidden root-paths between islands | ⬜ Not started |
+| Day 7 | Level Dressing & Clutter | Hand-placed island set dressing + `ATaeClutterScatter` random props | ⬜ Not started |
+| Day 8 | Interactables & Connections | Chest/pickup spawners + `ATaeWorldManager` hidden root-paths | ⬜ Not started |
 | Day 9 | Audio & SFX | UI sounds + portal/spectral SFX + ambient music | ⬜ Not started |
 
 ---
@@ -166,23 +166,25 @@
 
 ---
 
-## Day 7 — Hierarchical World System
+## Day 7 — Level Dressing & Clutter
 
-**Goal:** Replace manual island placement with a data-driven, modular system. Full proposal in `docs/HierarchicalIsland.txt`.
+**Goal:** Replace procedural grid-cube islands with hand-placed rock/ruin set dressing, plus a randomised small-prop scatter system for clutter. Full proposal in [docs/LevelGeneration.md](LevelGeneration.md).
 
-- [ ] `ATaeIsland` — replaces `ATaeGridManager`; owns `UTaeStateComponent`; spawns cube grid from archetype; broadcasts state to child cubes directly (cubes no longer register with GAS themselves)
-- [ ] `FTaeIslandArchetype` — `USTRUCT` DataTable row; fields: `GridDimensions`, `DecayFactor` (float 0–1), `bIsPuzzleIsland`
-- [ ] `DT_IslandArchetypes` — DataTable of island archetypes (e.g. Rusty Factory, Mossy Overgrowth)
-- [ ] `DecayFactor` spawning — roll against `FRandomStream` seed; spawn `BP_GridCube` or skip/replace with junk mesh
-- [ ] Per-archetype material override — Island passes archetype materials to each spawned GridCube at spawn time
+> Retires `ATaeGridManager`, `FTaeIslandArchetype`, `DT_IslandArchetypes`, and the `DecayFactor` roll from the earlier procedural plan. `ATaeGridCube`'s reveal pattern survives — reused by `ATaeRootPath` in Day 8.
 
-## Day 8 — World Manager & Connections
+- [ ] Hand-place island set dressing — `BP_Rock_*`, `BP_Ruin_*` static meshes arranged manually per island in the level (no spawner code)
+- [ ] `ATaeClutterScatter` — Actor with bounds (box/spline) + mesh pool (small rocks, wire piles, scrap); scatters N instances via `UInstancedStaticMeshComponent` on construction; per-instance `FRandomStream` seed for reproducible placement; optional ground-snap via line trace
+- [ ] `BP_ClutterScatter_Rocks`, `BP_ClutterScatter_Wires` — placed per island, density/seed tuned per instance
 
-**Goal:** Top-level manager tracks all islands and the hidden root-paths between them.
+## Day 8 — Interactables & Connections
 
-- [ ] `ATaeWorldManager` — one per level; holds references to all `ATaeIsland` actors + hidden connection path data
-- [ ] Connection paths hidden by default; revealed (visibility + collision) when `Arcane.Vision` tag is active
-- [ ] `BP_IndustrialJunk` — Nanite-enabled junk mesh actor; spawned by Island when `DecayFactor` roll fails
+**Goal:** Chests and pickups spawn semi-randomly at designer-placed markers. Top-level manager tracks the hidden root-paths between islands, revealed by Arcane Vision (mechanic unchanged from the original proposal).
+
+- [ ] `ATaeInteractableSpawnPoint` — lightweight marker actor; designer places more per island than the number that will actually spawn
+- [ ] `ATaeInteractableSpawner` — collects all spawn points at `BeginPlay`; rolls `SpawnChance` per point (`FRandomStream`); picks a random interactable class from a weighted pool (`FTaeInteractableEntry { Class, Weight }`) for each point that hits
+- [ ] `BP_Chest`, `BP_Pickup_Mana` — interactable Blueprints
+- [ ] `ATaeWorldManager` — one per level; holds references to `ATaeRootPath` actors (hidden root connections between islands)
+- [ ] `ATaeRootPath` — spline-based actor representing one hidden root connection; placed by a designer; hidden by default (visibility + collision off), revealed via `UTaeStateComponent` listening for `Arcane.Vision` (same reveal pattern as `ATaeGridCube`)
 
 ---
 
