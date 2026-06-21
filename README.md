@@ -1,10 +1,10 @@
-# Project: Through Arcane Eyes (UE 5.7)
-"Through Arcane Eyes" is a technical vertical slice developed in Unreal Engine 5.7. It serves as a portfolio demonstration of high-level C++ architecture, modern UI patterns (MVVM + Common UI), and advanced shader techniques.
+# Project: Through Arcane Eyes (UE 5.8)
+"Through Arcane Eyes" is a technical vertical slice developed in Unreal Engine 5.8. It serves as a portfolio demonstration of high-level C++ architecture, modern UI patterns (MVVM + Common UI), and advanced shader techniques.
 
 You play as **Ant** — a humanoid living tree, roots for legs and branches for arms — stranded in a ruined factory world of floating cube islands. The land is broken, rusted, and overgrown. By activating **Arcane Vision** (the Spectral Shift), Ant perceives what could exist: hidden geometry, dormant connections, paths yet to grow. The goal is to restore the land — crossing and linking the separated islands by growing roots, vines, and trees between them.
 
 # 🛠 Technology Stack
-* Engine: Unreal Engine 5.7 (C++ 20)
+* Engine: Unreal Engine 5.8 (C++ 20)
 * Input: Enhanced Input System (Modular Mapping Contexts)
 * UI Architecture: Common UI (Input Routing) + UMG Viewmodel (Data Binding)
 * Rendering: Post-Process Materials, Global Distance Fields, Stencil Buffers, Substrate Materials

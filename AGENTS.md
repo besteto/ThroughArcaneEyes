@@ -1,6 +1,6 @@
 # AGENTS.md — ThroughArcaneEyes
 
-Guidance for AI agents working in this UE 5.7 first-person puzzle game.
+Guidance for AI agents working in this UE 5.8 first-person puzzle game.
 
 > For deeper design context see [docs/Architecture.md](docs/Architecture.md) · [docs/Roadmap.md](docs/Roadmap.md) · [docs/SpectralVision.md](docs/SpectralVision.md) · [docs/UIArchitecture.md](docs/UIArchitecture.md)
 > For human-readable code style and full commit tag vocabulary see [CONTRIBUTING.md](CONTRIBUTING.md)
@@ -19,7 +19,7 @@ Single game module: `ThroughArcaneEyes` (Runtime, `UseExplicitOrSharedPCHs`).
 
 No custom plugins. Engine plugins in use: `ModelingToolsEditorMode` (editor-only), `GameplayAbilities`, `CommonUI`.
 
-Targets: `ThroughArcaneEyes.Target.cs` (Game) and `ThroughArcaneEyesEditor.Target.cs` (Editor), both `BuildSettingsVersion.V6` / `IncludeOrderVersion.Unreal5_7`.
+Targets: `ThroughArcaneEyes.Target.cs` (Game) and `ThroughArcaneEyesEditor.Target.cs` (Editor), both `BuildSettingsVersion.V7` / `IncludeOrderVersion.Unreal5_8`.
 
 ---
 
@@ -183,7 +183,7 @@ Full vocabulary in [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Build & Iteration
 
 - **Full rebuild:** open `ThroughArcaneEyes.uproject` in UE5 and use *Tools → Compile* or run UBT from the engine's `Build.bat`.
-- **Live Coding:** enabled by default in UE5.7; use `Ctrl+Alt+F11` in editor.
+- **Live Coding:** enabled by default in UE5.8; use `Ctrl+Alt+F11` in editor.
 - **Rider:** open the `.uproject`-generated `.sln`; use the built-in UBT run configurations.
 - After adding a new `.h`/`.cpp` pair, run *Tools → Refresh Visual Studio Project* (or Rider equivalent) to regenerate project files.
 
