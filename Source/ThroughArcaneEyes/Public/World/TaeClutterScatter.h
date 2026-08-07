@@ -24,8 +24,6 @@ public:
 	virtual void OnConstruction(const FTransform& Transform) override;
 
 protected:
-	virtual void BeginPlay() override;
-
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 #endif

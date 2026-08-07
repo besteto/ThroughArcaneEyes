@@ -25,11 +25,6 @@ void ATaeClutterScatter::OnConstruction(const FTransform& Transform)
 	ScatterInstances();
 }
 
-void ATaeClutterScatter::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 void ATaeClutterScatter::ScatterInstances()
 {
 	for (UInstancedStaticMeshComponent* Comp : ScatterComponents)
@@ -79,7 +74,11 @@ void ATaeClutterScatter::ScatterInstances()
 			const FVector WorldStart = GetActorTransform().TransformPosition(LocalLocation);
 			const FVector WorldEnd = WorldStart - FVector(0.f, 0.f, GroundTraceDistance);
 			FHitResult Hit;
-			if (GetWorld() && GetWorld()->LineTraceSingleByChannel(Hit, WorldStart, WorldEnd, ECC_Visibility))
+			// Ignore self — the ISM components already hold every instance placed so far this pass, and
+			// their collision is on by default, so without this each prop can land on top of an earlier one.
+			FCollisionQueryParams TraceParams;
+			TraceParams.AddIgnoredActor(this);
+			if (GetWorld() && GetWorld()->LineTraceSingleByChannel(Hit, WorldStart, WorldEnd, ECC_Visibility, TraceParams))
 			{
 				LocalLocation = GetActorTransform().InverseTransformPosition(Hit.Location);
 			}

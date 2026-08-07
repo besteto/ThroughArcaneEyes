@@ -63,8 +63,6 @@ void ATaeRootPath::RebuildSplineMeshes()
 		const FVector EndTangent = Spline->GetTangentAtSplinePoint(Index + 1, ESplineCoordinateSpace::Local);
 
 		Segment->SetStartAndEnd(StartPos, StartTangent, EndPos, EndTangent);
-		Segment->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		Segment->SetVisibility(false);
 
 		SplineMeshSegments.Add(Segment);
 	}
@@ -75,16 +73,25 @@ void ATaeRootPath::BeginPlay()
 	Super::BeginPlay();
 
 	StateComponent->OnArcaneStateChanged.AddDynamic(this, &ATaeRootPath::OnArcaneStateChanged);
+
+	// Segments stay visible in the editor so the spline can be authored; they only hide once play starts,
+	// same as ATaeGridCube's bStartHidden handling.
+	SetSegmentsRevealed(false);
 }
 
 void ATaeRootPath::OnArcaneStateChanged(bool bArcaneActive)
+{
+	SetSegmentsRevealed(bArcaneActive);
+}
+
+void ATaeRootPath::SetSegmentsRevealed(const bool bRevealed)
 {
 	for (USplineMeshComponent* Segment : SplineMeshSegments)
 	{
 		if (Segment)
 		{
-			Segment->SetVisibility(bArcaneActive);
-			Segment->SetCollisionEnabled(bArcaneActive ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+			Segment->SetVisibility(bRevealed);
+			Segment->SetCollisionEnabled(bRevealed ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
 		}
 	}
 }

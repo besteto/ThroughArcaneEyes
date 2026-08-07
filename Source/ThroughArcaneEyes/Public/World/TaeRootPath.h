@@ -38,6 +38,8 @@ private:
 
 	void RebuildSplineMeshes();
 
+	void SetSegmentsRevealed(bool bRevealed);
+
 	UPROPERTY(VisibleAnywhere, Category = "RootPath")
 	TObjectPtr<USplineComponent> Spline;
 
