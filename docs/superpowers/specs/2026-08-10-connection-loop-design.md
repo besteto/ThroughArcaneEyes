@@ -111,8 +111,8 @@ Naming follows the existing split: the *action* is the shift/grow name (`GA_Grow
 `DoGrowRoot`), the *state* is the world name (`Arcane.Vision`). New native tags go in `TaeGASTypes.h`
 beside `TAG_Arcane_Vision` — no `FName` strings.
 
-> Naming note: `GrowRoot` is a placeholder. Per the project's naming rule, replace it with whatever the
-> mechanic is actually called in the README once that name is settled.
+> Naming confirmed 2026-08-10: **GrowRoot** is the mechanic name. `GA_GrowRoot` / `IA_GrowRoot` /
+> `DoGrowRoot` are final, not placeholders. Update the README's vocabulary to match.
 
 ---
 
@@ -285,6 +285,9 @@ over-shoulder third-person), omits `ModelViewViewModel` from its Build.cs list, 
 as the example of a convention it breaks, and refers to a `BP_Hero` that does not exist — the asset is
 `BP_TaeCharacter`. `Roadmap.md` Day 1 still lists pre-rename `IA_MoveInputAction` names.
 
+`AGENTS.md` also needs its "no new Build.cs modules" rule amended: per §13 that constraint is lifted for
+Slate and editor tooling modules.
+
 ---
 
 ## 11. Milestones
@@ -337,11 +340,14 @@ The whole point of the project, proven on throwaway art.
 ### M5 — World, Progression, Polish
 
 - `ATaeGameState` win condition on `RestoredCount >= RequiredCount`
+- **Save game** — persist restored connections (see §13). Sequenced here, after M4, so the schema is
+  designed against the real generator output: PCG seed + per-path `GrowthAlpha`, not a world dump
 - Interactable spawner wired to authored spawn points
 - Audio pass (the existing Day 9 list — music crossfade C++ is already done)
 - Doc drift corrections from §10
 
-> Gate: full playthrough clip — restore every connection, portal opens, victory screen.
+> Gate: full playthrough clip — restore every connection, portal opens, victory screen. Quit, reload,
+> and confirm restored connections survive.
 
 ---
 
@@ -355,11 +361,20 @@ The whole point of the project, proven on throwaway art.
 | GameplayCameras replaces a working spring-arm setup | Keep the spring arm until the Arcane rig is proven, then remove |
 | Mana drain rates make the loop tedious or trivial | All exposed as `EditAnywhere` on the ability; tune in M1 before building content on top |
 
-## 13. Open Questions
+## 13. Resolved (2026-08-10)
 
-- The mechanic name. `GrowRoot` is a placeholder; the project's naming rule wants the README's own
-  vocabulary, which does not yet have a word for this verb.
-- Whether restored connections should persist across level reload (save game) or only within a session.
-  M1 assumes session-only; nothing in the architecture blocks adding persistence later.
-- Whether a Slate **editor** panel for authoring root paths is worth a separate editor module. It would
-  be genuine Slate work but contradicts `AGENTS.md`'s "no new Build.cs modules" rule. Out of scope here.
+**Mechanic name — GrowRoot.** Confirmed. `GA_GrowRoot`, `IA_GrowRoot`, `DoGrowRoot` are final. The
+README's vocabulary section gains the term.
+
+**Persistence — save game, scheduled after M4.** Restored connections persist across level reload.
+Deliberately sequenced after the PCG work, because what has to be serialised depends on what the
+generator produces: if island content is regenerated from a seed, the save stores the seed plus the
+per-path `GrowthAlpha` set, not a dump of world state. Settling the generator first avoids designing a
+schema twice. **M1 through M4 remain session-only**, and nothing in §4 blocks the addition — the state
+already lives on `ATaeRootPath` with `ATaeWorldManager` as its registry, which is exactly the shape a
+save needs.
+
+**Slate editor modules — allowed.** The "no new Build.cs modules" rule in `AGENTS.md` is lifted for
+Slate/editor tooling. A root-path authoring panel is therefore viable and becomes a candidate once M1
+proves what authoring actually needs. Still **not in M1 scope** — build the loop before building tools
+for it.
