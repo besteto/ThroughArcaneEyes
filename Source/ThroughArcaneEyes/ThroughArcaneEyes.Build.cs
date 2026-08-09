@@ -19,7 +19,10 @@ public class ThroughArcaneEyes : ModuleRules
 
 		// GAS
 		PublicDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "GameplayTags", "GameplayTasks" });
-
+		
+		// Cameras
+		PublicDependencyModuleNames.AddRange(new string[] { "GameplayCameras" });
+		
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 		
