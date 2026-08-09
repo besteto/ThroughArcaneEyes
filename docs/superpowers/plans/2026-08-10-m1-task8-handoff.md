@@ -65,8 +65,8 @@ visual behaviour has been confirmed.**
 - [ ] `GetAll TaeRootPath GrowthAlpha` reports `0.0` at start
 
 ### From Task 6 — arcane blend
-- [ ] Post-process **fades** in/out over ~0.35s rather than popping
-- [ ] Vignette flash fades smoothly rather than snapping off
+- [x] Post-process **fades** in/out over ~0.35s rather than popping
+- [x] Vignette flash fades smoothly rather than snapping off
 
 ### From Task 7 — the channel
 - [ ] Holding **E** at an anchor actually starts a channel *(confirms pawn-vs-anchor overlap survives the Blueprint subclasses — verified correct for native defaults only)*
