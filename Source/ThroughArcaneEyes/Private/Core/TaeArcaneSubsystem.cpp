@@ -15,6 +15,7 @@ void UTaeArcaneSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	if (SpectralVolume)
 	{
 		SpectralVolume->bEnabled = false;
+		SpectralVolume->BlendWeight = 0.f;
 	}
 
 	UTaeGameInstance* GI = InWorld.GetGameInstance<UTaeGameInstance>();
@@ -35,45 +36,71 @@ void UTaeArcaneSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	}
 }
 
-void UTaeArcaneSubsystem::SetArcaneActive(bool bActive)
+float UTaeArcaneSubsystem::StepBlendAlpha(const float Current, const float Target, const float DeltaTime, const float Duration)
 {
-	bVolumeActive = bActive;
-
-	if (SpectralVolume)
+	if (Duration <= 0.f)
 	{
-		SpectralVolume->bEnabled = bActive;
+		return Target;
 	}
+
+	// A speed of 1/Duration traverses the full 0..1 range in exactly Duration seconds.
+	return FMath::FInterpConstantTo(Current, Target, DeltaTime, 1.f / Duration);
+}
+
+void UTaeArcaneSubsystem::SetArcaneActive(const bool bActive)
+{
+	ArcaneBlendTarget = bActive ? 1.f : 0.f;
 
 	CrossfadeMusic(bActive);
 	FlashVignette();
 }
 
-void UTaeArcaneSubsystem::FlashVignette(float Duration)
+void UTaeArcaneSubsystem::FlashVignette(const float Duration)
 {
-	if (!SpectralVolume) return;
-
-	// Spike vignette to max then fade out over Duration
-	FPostProcessSettings& Settings = SpectralVolume->Settings;
-	Settings.bOverride_VignetteIntensity = true;
-	Settings.VignetteIntensity = 1.f;
-
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	World->GetTimerManager().ClearTimer(VignetteTimerHandle);
-	World->GetTimerManager().SetTimer(
-		VignetteTimerHandle,
-		this,
-		&UTaeArcaneSubsystem::ClearVignetteFlash,
-		Duration,
-		false
-	);
+	VignetteFlashDuration = FMath::Max(Duration, KINDA_SMALL_NUMBER);
+	VignetteFlashAlpha = 1.f;
 }
 
-void UTaeArcaneSubsystem::ClearVignetteFlash()
+void UTaeArcaneSubsystem::Tick(const float DeltaTime)
 {
-	if (!SpectralVolume) return;
-	SpectralVolume->Settings.VignetteIntensity = 0.f;
+	Super::Tick(DeltaTime);
+
+	const float NewAlpha = StepBlendAlpha(ArcaneBlendAlpha, ArcaneBlendTarget, DeltaTime, ArcaneTransitionDuration);
+	const bool bAlphaChanged = !FMath::IsNearlyEqual(NewAlpha, ArcaneBlendAlpha);
+	ArcaneBlendAlpha = NewAlpha;
+
+	// Vignette now actually interpolates — it used to snap to zero on a timer
+	const bool bFlashing = VignetteFlashAlpha > 0.f;
+	if (bFlashing)
+	{
+		VignetteFlashAlpha = FMath::Max(VignetteFlashAlpha - (DeltaTime / VignetteFlashDuration), 0.f);
+	}
+
+	if (bAlphaChanged || bFlashing)
+	{
+		ApplyBlendAlpha();
+	}
+}
+
+TStatId UTaeArcaneSubsystem::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UTaeArcaneSubsystem, STATGROUP_Tickables);
+}
+
+void UTaeArcaneSubsystem::ApplyBlendAlpha()
+{
+	if (!SpectralVolume)
+	{
+		return;
+	}
+
+	// BlendWeight replaces the old binary bEnabled so the volume fades with the camera
+	SpectralVolume->bEnabled = ArcaneBlendAlpha > 0.f;
+	SpectralVolume->BlendWeight = ArcaneBlendAlpha;
+
+	FPostProcessSettings& Settings = SpectralVolume->Settings;
+	Settings.bOverride_VignetteIntensity = true;
+	Settings.VignetteIntensity = VignetteFlashAlpha;
 }
 
 void UTaeArcaneSubsystem::CrossfadeMusic(bool bToArcane)
