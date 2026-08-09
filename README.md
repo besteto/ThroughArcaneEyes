@@ -8,11 +8,17 @@ You play as **Ant** — a humanoid living tree, roots for legs and branches for 
 * Input: Enhanced Input System (Modular Mapping Contexts)
 * UI Architecture: Common UI (Input Routing) + UMG Viewmodel (Data Binding)
 * Rendering: Post-Process Materials, Global Distance Fields, Stencil Buffers, Substrate Materials
-* Gameplay: GAS (Gameplay Ability System) — Arcane toggle, Mana attribute, Gameplay Tags
-* Camera: Close over-the-shoulder third-person (`USpringArmComponent`)
-* Animation: Motion Matching (PoseSearch) — tree locomotion (root gait) + Arcane root-reach/extend poses
-* World Gen: C++ procedural grid actors (`ATaeGridCube`, `ATaeGridManager`)
+* Gameplay: GAS (Gameplay Ability System) — Arcane toggle, root-growth channel, Mana attribute, Gameplay Tags
+* Camera: Close over-the-shoulder third-person, blending to a pulled-back Arcane framing (`GameplayCameras`)
+* Animation: Control Rig procedural tree motion — root drift, trunk bend, Arcane reach *(planned, M2)*
+* World Gen: Hand-authored islands with PCG-generated detail and scatter *(planned, M4)*
+* Testing: UE Automation Tests — pure game logic covered headlessly
 * Workflow: Git (GitHub Actions for CI/CD), Obsidian (Knowledge Management)
+
+> **Note on Motion Matching:** `PoseSearch` was evaluated and deliberately dropped. It is data-hungry
+> and tuned for naturalistic humanoid locomotion — close to the opposite of what a walking tree needs.
+> Control Rig produces distinctive, non-humanoid motion from far less source animation. The
+> `UAF`/AnimNext stack was also assessed and rejected: every module ships under `Engine/Plugins/Experimental/` in 5.8.
 
 # 🏗 System Architecture
 
@@ -29,13 +35,23 @@ The HUD does not use Tick or standard Event Construct binding.
 
 ## 3. The "Spectral" Rendering Pipeline
 * The Vision: A custom Post-Process pass — animated plasma overlay with DDX/DDY depth edge detection and chromatic aberration — activates when Arcane Vision is toggled.
-* The Hidden Path: Actors use Gameplay Tags and a centralized `UTaeStateComponent`. When the `Arcane.Vision` tag is granted, hidden cube islands toggle their visibility and collision — revealing the dormant land Ant must restore.
+* The Hidden Path: Actors use Gameplay Tags and a centralized `UTaeStateComponent`. When the `Arcane.Vision` tag is granted, dormant root connections reveal themselves as ghosts — the land Ant must restore.
+
+## 4. The Connection Loop
+The core verb of the game. Arcane Vision is both the diagnostic and the workshop.
+
+* **See** — entering Arcane pulls the camera back and reveals the ghost root network between islands.
+* **Grow** — standing at an `ATaeRootAnchor`, Ant channels (`UGA_GrowRoot`) and the root materialises segment by segment along a spline while mana drains.
+* **Persist** — growth is permanent *and* partial. Release early and progress is kept; return later and resume. Mana pressure interrupts, it never punishes.
+* **Cross** — at full growth the root becomes solid and walkable in normal mode.
+
+State lives with the thing it describes: `ATaeRootPath` owns its own `GrowthAlpha` and `ETaeConnectionState`; `ATaeWorldManager` is a registry that counts and broadcasts. GAS owns the *verb*, plain actor state owns the *world* — a root path is a float and an enum, so giving it an ASC would buy nothing.
+
+A single `ArcaneBlendAlpha` on `UTaeArcaneSubsystem` drives the post-process weight, the camera blend, and (later) the UI overlay from one interpolator, so the three can never disagree on timing.
 
 # 📅 Development Roadmap
 
-See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checklists.
-
-**Sprint 1 — Core Vertical Slice**
+**Sprint 1 — Core Vertical Slice** ✅ Complete
 
 | Day | Focus | Status |
 |-----|-------|--------|
@@ -43,23 +59,33 @@ See **[docs/Roadmap.md](docs/Roadmap.md)** for the full plan and per-day checkli
 | Day 2 | GAS + Spectral Shaders | ✅ Done |
 | Day 3 | Grid + Third-Person Camera | ✅ Done |
 | Day 4 | Data-Driven UI | ✅ Done |
-| Day 5 | Portal & Polish | 🔄 In progress |
+| Day 5 | Portal & Polish | ✅ Done |
 
-**Sprint 2 — Enhancement** *(optional)*
+**Sprint 2 — Milestones**
 
-| Day | Focus | Status |
-|-----|-------|--------|
-| Day 6 | Animation (Motion Matching) | ⬜ Not started |
-| Day 7 | Hierarchical World System | ⬜ Not started |
-| Day 8 | World Manager & Connections | ⬜ Not started |
-| Day 9 | Audio & SFX | ⬜ Not started |
+Day-based planning was retired: the labels stopped describing reality. Milestones are now gated on a
+recordable demo rather than a calendar. Full design in
+**[the connection loop spec](docs/superpowers/specs/2026-08-10-connection-loop-design.md)**.
+
+| Milestone | Focus | Status |
+|-----------|-------|--------|
+| M1 | Connection Loop Playable | ✅ Done |
+| M2 | Ant Moves Like A Tree — Control Rig | ⬜ Not started |
+| M3 | The Network Is Legible — Slate overlay | ⬜ Not started |
+| M4 | Islands Become Generated — PCG | ⬜ Not started |
+| M5 | World, Progression, Polish — win state, save, audio | ⬜ Not started |
+
+**M1 gate:** reveal a broken root in Arcane Vision, channel it to half growth, release, return, finish
+it, then walk across it in normal mode — verified in-editor.
 
 # 📚 Docs
 
 | File | Contents |
 |------|----------|
-| [docs/Roadmap.md](docs/Roadmap.md) | Sprint plan + per-day checklists |
-| [docs/LevelGeneration.md](docs/LevelGeneration.md) | Days 7–8 design: hand-placed islands, `ATaeClutterScatter`, interactable spawners, `ATaeWorldManager` root-paths |
+| [docs/superpowers/specs/2026-08-10-connection-loop-design.md](docs/superpowers/specs/2026-08-10-connection-loop-design.md) | **Current design authority.** Connection loop, milestones M1–M5, decisions and rejected alternatives |
+| [docs/superpowers/plans/2026-08-10-m1-connection-loop.md](docs/superpowers/plans/2026-08-10-m1-connection-loop.md) | M1 implementation plan, with corrections applied during execution |
+| [docs/Roadmap.md](docs/Roadmap.md) | Sprint 1 record + per-day checklists *(Days 6–9 superseded by the spec)* |
+| [docs/LevelGeneration.md](docs/LevelGeneration.md) | Level dressing design: `ATaeClutterScatter`, interactable spawners *(island approach superseded by the spec's hybrid PCG)* |
 | [docs/Architecture.md](docs/Architecture.md) | Class hierarchy, module deps, data-flow diagrams |
 | [docs/SpectralVision.md](docs/SpectralVision.md) | Spectral Shift system: GameplayTags, StateComponent, Post-Process pipeline |
 | [docs/UIArchitecture.md](docs/UIArchitecture.md) | MVVM ViewModel, Common UI stack, widget conventions |
