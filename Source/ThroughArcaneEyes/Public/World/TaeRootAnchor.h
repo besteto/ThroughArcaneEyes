@@ -34,7 +34,8 @@ private:
 	UPROPERTY(EditInstanceOnly, Category = "RootAnchor")
 	TObjectPtr<ATaeRootPath> Path;
 
-	// Anchors at the spline start grow forward; anchors at the far end grow backward
+	// Reserved for choosing which end of the spline materialises first in a later milestone.
+	// Not consumed yet — growth currently advances the shared alpha the same way from either end.
 	UPROPERTY(EditInstanceOnly, Category = "RootAnchor")
 	bool bGrowsForward = true;
 };

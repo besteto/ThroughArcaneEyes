@@ -61,6 +61,5 @@ private:
 	UPROPERTY()
 	TObjectPtr<ATaeRootPath> ActivePath;
 
-	float GrowthDirection = 1.f;
 	FTimerHandle GrowthTimerHandle;
 };

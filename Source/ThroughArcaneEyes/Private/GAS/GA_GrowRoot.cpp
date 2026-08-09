@@ -86,7 +86,6 @@ void UGA_GrowRoot::ActivateAbility(
 	}
 
 	ActivePath = Anchor->GetPath();
-	GrowthDirection = Anchor->GetGrowthDirection();
 
 	UWorld* World = GetWorld();
 	if (!World)
@@ -109,7 +108,7 @@ void UGA_GrowRoot::TickGrowth()
 	}
 
 	// Out of mana ends the channel; progress so far is kept
-	const float Mana = ASC->GetNumericAttribute(UTaeManaAttributeSet::GetManaAttribute());
+	const float Mana = ASC->GetNumericAttributeBase(UTaeManaAttributeSet::GetManaAttribute());
 	const float ManaThisTick = ManaCostPerSecond * GrowthTickInterval;
 	if (Mana < ManaThisTick)
 	{
@@ -118,10 +117,10 @@ void UGA_GrowRoot::TickGrowth()
 	}
 
 	ASC->SetNumericAttributeBase(UTaeManaAttributeSet::GetManaAttribute(), Mana - ManaThisTick);
-	ActivePath->AdvanceGrowth(GrowthRate * GrowthTickInterval * GrowthDirection);
+	ActivePath->AdvanceGrowth(GrowthRate * GrowthTickInterval);
 
 	// Finished — stop rather than burning mana on a full path
-	if (ActivePath->GetConnectionState() == ETaeConnectionState::Restored && GrowthDirection > 0.f)
+	if (ActivePath->GetConnectionState() == ETaeConnectionState::Restored)
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	}
