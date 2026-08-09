@@ -28,7 +28,13 @@ void ATaeRootPath::OnConstruction(const FTransform& Transform)
 
 void ATaeRootPath::RebuildSplineMeshes()
 {
-	for (USplineMeshComponent* Segment : SplineMeshSegments)
+	// Destroy EVERY spline mesh this actor owns, not just the ones the tracking array knows about.
+	// SplineMeshSegments is Transient, so it is empty after PIE duplication and after a construction
+	// rerun — while the duplicated components themselves survive. Iterating the array here therefore
+	// destroyed nothing and leaked a full orphaned set on every rebuild.
+	TArray<USplineMeshComponent*> ExistingSegments;
+	GetComponents(ExistingSegments);
+	for (USplineMeshComponent* Segment : ExistingSegments)
 	{
 		if (Segment)
 		{
@@ -74,6 +80,14 @@ void ATaeRootPath::BeginPlay()
 	Super::BeginPlay();
 
 	StateComponent->OnArcaneStateChanged.AddDynamic(this, &ATaeRootPath::OnArcaneStateChanged);
+
+	// SplineMeshSegments is Transient and does not survive PIE duplication or a construction rerun, so
+	// by the time play starts the array is empty even though the components exist. Rebuild so the array
+	// again matches reality — without this, RefreshSegments early-returns and the root never reveals.
+	if (SplineMeshSegments.Num() == 0)
+	{
+		RebuildSplineMeshes();
+	}
 
 	// Segments stay visible in the editor so the spline can be authored; they only hide once play starts,
 	// same as ATaeGridCube's bStartHidden handling.
