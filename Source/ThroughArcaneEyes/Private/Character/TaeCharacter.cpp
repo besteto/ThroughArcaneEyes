@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "GAS/TaeManaAttributeSet.h"
 #include "Abilities/GameplayAbility.h"
+#include "ThroughArcaneEyes.h"
 
 ATaeCharacter::ATaeCharacter()
 {
@@ -37,5 +38,14 @@ void ATaeCharacter::BeginPlay()
 	if (SpectralShiftAbility)
 	{
 		SpectralShiftHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(SpectralShiftAbility));
+	}
+
+	if (GrowRootAbility)
+	{
+		GrowRootHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(GrowRootAbility));
+	}
+	else
+	{
+		UE_LOG(LogTae, Warning, TEXT("[Character] GrowRootAbility is NULL — assign it in BP_Hero Class Defaults"));
 	}
 }

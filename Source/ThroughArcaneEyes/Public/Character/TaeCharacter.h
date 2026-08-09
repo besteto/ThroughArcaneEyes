@@ -25,6 +25,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	FGameplayAbilitySpecHandle GetSpectralShiftHandle() const { return SpectralShiftHandle; }
+	FGameplayAbilitySpecHandle GetGrowRootHandle() const { return GrowRootHandle; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -43,6 +44,12 @@ private:
 	TSubclassOf<UGameplayAbility> SpectralShiftAbility;
 
 	FGameplayAbilitySpecHandle SpectralShiftHandle;
+
+	// Ability class granted on BeginPlay — assign BP_GA_GrowRoot in BP_Hero Class Defaults
+	UPROPERTY(EditDefaultsOnly, Category = "GAS")
+	TSubclassOf<UGameplayAbility> GrowRootAbility;
+
+	FGameplayAbilitySpecHandle GrowRootHandle;
 
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;

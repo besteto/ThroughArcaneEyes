@@ -45,6 +45,8 @@ void ATaePlayerController::SetupInputComponent()
 		EiComp->BindAction(JumpAction,          ETriggerEvent::Started,   this, &ThisClass::DoJump);
 		EiComp->BindAction(JumpAction,          ETriggerEvent::Completed, this, &ThisClass::DoStopJumping);
 		EiComp->BindAction(SpectralShiftAction, ETriggerEvent::Started, this, &ThisClass::DoSpectralShift);
+		EiComp->BindAction(GrowRootAction,      ETriggerEvent::Started,   this, &ThisClass::DoGrowRoot);
+		EiComp->BindAction(GrowRootAction,      ETriggerEvent::Completed, this, &ThisClass::DoStopGrowRoot);
 		EiComp->BindAction(PauseAction,         ETriggerEvent::Started, this, &ThisClass::DoPause);
 	}
 	else
@@ -141,6 +143,26 @@ void ATaePlayerController::DoSpectralShift(const FInputActionInstance& Action)
 	}
 }
 
+void ATaePlayerController::DoGrowRoot(const FInputActionInstance& Action)
+{
+	if (!OwnerCharacter) return;
+
+	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	ASC->TryActivateAbility(OwnerCharacter->GetGrowRootHandle());
+}
+
+void ATaePlayerController::DoStopGrowRoot(const FInputActionInstance& Action)
+{
+	if (!OwnerCharacter) return;
+
+	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
+	if (!ASC) return;
+
+	ASC->CancelAbilityHandle(OwnerCharacter->GetGrowRootHandle());
+}
+
 #if WITH_EDITOR
 EDataValidationResult ATaePlayerController::IsDataValid(FDataValidationContext& Context) const
 {
@@ -169,6 +191,11 @@ EDataValidationResult ATaePlayerController::IsDataValid(FDataValidationContext& 
 	if (!SpectralShiftAction)
 	{
 		Context.AddError(NSLOCTEXT("TaeValidation", "NoSpectralShiftAction", "TaePlayerController: SpectralShiftAction is not assigned."));
+		Result = EDataValidationResult::Invalid;
+	}
+	if (!GrowRootAction)
+	{
+		Context.AddError(NSLOCTEXT("TaeValidation", "NoGrowRootAction", "TaePlayerController: GrowRootAction is not assigned."));
 		Result = EDataValidationResult::Invalid;
 	}
 	if (!PauseAction)

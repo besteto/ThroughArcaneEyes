@@ -14,3 +14,4 @@
 
 // Project-wide gameplay tags — defined in TaeGASTypes.cpp
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Arcane_Vision)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Arcane_Growing)

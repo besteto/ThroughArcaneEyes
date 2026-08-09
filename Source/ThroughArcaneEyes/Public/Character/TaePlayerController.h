@@ -34,6 +34,9 @@ protected:
 	TObjectPtr<UInputAction> SpectralShiftAction;
 
 	UPROPERTY(EditAnywhere, Category = "Tae")
+	TObjectPtr<UInputAction> GrowRootAction;
+
+	UPROPERTY(EditAnywhere, Category = "Tae")
 	TObjectPtr<UInputAction> PauseAction;
 
 	virtual void BeginPlay() override;
@@ -49,6 +52,8 @@ protected:
 	void DoJump(const FInputActionInstance& Action);
 	void DoStopJumping(const FInputActionInstance& Action);
 	void DoSpectralShift(const FInputActionInstance& Action);
+	void DoGrowRoot(const FInputActionInstance& Action);
+	void DoStopGrowRoot(const FInputActionInstance& Action);
 	void DoPause(const FInputActionInstance& Action);
 
 	// Implemented in BP_TaePlayerController — opens WBP_PauseMenu
