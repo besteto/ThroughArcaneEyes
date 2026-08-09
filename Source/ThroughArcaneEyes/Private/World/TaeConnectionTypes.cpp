@@ -13,7 +13,7 @@ ETaeConnectionState FTaeGrowthStep::StateFor(const float Alpha)
 	{
 		return ETaeConnectionState::Restored;
 	}
-	if (Alpha > KINDA_SMALL_NUMBER)
+	if (Alpha > 0.f)
 	{
 		return ETaeConnectionState::Growing;
 	}

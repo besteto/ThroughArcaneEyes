@@ -31,6 +31,8 @@ bool FTaeGrowthStepTest::RunTest(const FString& Parameters)
 	// Boundary: anything above zero has begun, only exactly-full is restored
 	TestTrue(TEXT("epsilon above zero is growing"),
 		FTaeGrowthStep::StateFor(KINDA_SMALL_NUMBER * 2.f) == ETaeConnectionState::Growing);
+	TestTrue(TEXT("tiny alpha below epsilon is growing"),
+		FTaeGrowthStep::StateFor(0.00005f) == ETaeConnectionState::Growing);
 	TestTrue(TEXT("just under one is still growing"),
 		FTaeGrowthStep::StateFor(0.999f) == ETaeConnectionState::Growing);
 
