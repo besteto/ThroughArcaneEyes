@@ -83,7 +83,7 @@ void ATaeRootPath::BeginPlay()
 void ATaeRootPath::AdvanceGrowth(const float DeltaAlpha)
 {
 	const float NewAlpha = FTaeGrowthStep::Advance(GrowthAlpha, DeltaAlpha);
-	if (FMath::IsNearlyEqual(NewAlpha, GrowthAlpha))
+	if (NewAlpha == GrowthAlpha)
 	{
 		return;
 	}

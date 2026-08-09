@@ -16,8 +16,9 @@ class UMaterialInterface;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnConnectionStateChanged, ATaeRootPath*, Path, ETaeConnectionState, NewState);
 
 // Hidden root connection between two islands. Builds one USplineMeshComponent per spline segment in
-// OnConstruction (so it updates live as the spline is edited); reveal follows the same pattern as
-// ATaeGridCube — a UTaeStateComponent listens for Arcane.Vision and toggles visibility/collision.
+// OnConstruction (so it updates live as the spline is edited). Growth determines which segments are
+// solid: grown segments stay visible and collidable in both modes; ungrown segments appear only as
+// ghosts while Arcane.Vision is active, and never collide.
 UCLASS()
 class THROUGHARCANEEYES_API ATaeRootPath : public AActor
 {
