@@ -22,6 +22,7 @@ public:
 	// Spike vignette intensity then fade back; Duration is total fade-out time
 	void FlashVignette(float Duration = 0.5f);
 
+	UFUNCTION(BlueprintPure, Category = "Arcane")
 	float GetArcaneBlendAlpha() const { return ArcaneBlendAlpha; }
 
 	// Pure interpolation step — moves Current toward Target so a full traverse takes Duration seconds.

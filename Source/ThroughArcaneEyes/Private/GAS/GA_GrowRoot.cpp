@@ -96,6 +96,21 @@ void UGA_GrowRoot::ActivateAbility(
 
 	World->GetTimerManager().SetTimer(
 		GrowthTimerHandle, this, &UGA_GrowRoot::TickGrowth, GrowthTickInterval, true);
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		ArcaneVisionHandle = ASC->RegisterGameplayTagEvent(TAG_Arcane_Vision, EGameplayTagEventType::NewOrRemoved)
+			.AddUObject(this, &UGA_GrowRoot::OnArcaneVisionChanged);
+	}
+}
+
+void UGA_GrowRoot::OnArcaneVisionChanged(const FGameplayTag Tag, const int32 NewCount)
+{
+	// Growing is an Arcane-mode act — losing the vision cancels the channel, keeping partial growth
+	if (NewCount <= 0)
+	{
+		CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
+	}
 }
 
 void UGA_GrowRoot::TickGrowth()
@@ -138,6 +153,15 @@ void UGA_GrowRoot::EndAbility(
 		World->GetTimerManager().ClearTimer(GrowthTimerHandle);
 	}
 	ActivePath = nullptr;
+
+	if (ArcaneVisionHandle.IsValid())
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			ASC->RegisterGameplayTagEvent(TAG_Arcane_Vision, EGameplayTagEventType::NewOrRemoved).Remove(ArcaneVisionHandle);
+		}
+		ArcaneVisionHandle.Reset();
+	}
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

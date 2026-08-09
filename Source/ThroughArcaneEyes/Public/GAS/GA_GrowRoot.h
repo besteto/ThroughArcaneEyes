@@ -47,19 +47,23 @@ private:
 	void TickGrowth();
 
 	// Alpha added per second of channelling — a full path takes 1/GrowthRate seconds
-	UPROPERTY(EditDefaultsOnly, Category = "GrowRoot")
+	UPROPERTY(EditDefaultsOnly, Category = "GrowRoot", meta = (ClampMin = "0.001"))
 	float GrowthRate = 0.35f;
 
 	// Mana drained per second while channelling
-	UPROPERTY(EditDefaultsOnly, Category = "GrowRoot")
+	UPROPERTY(EditDefaultsOnly, Category = "GrowRoot", meta = (ClampMin = "0.0"))
 	float ManaCostPerSecond = 12.f;
 
 	// How often growth is applied. Coarser than frame rate; growth is not frame-dependent.
-	UPROPERTY(EditDefaultsOnly, Category = "GrowRoot")
+	UPROPERTY(EditDefaultsOnly, Category = "GrowRoot", meta = (ClampMin = "0.01"))
 	float GrowthTickInterval = 0.05f;
 
 	UPROPERTY()
 	TObjectPtr<ATaeRootPath> ActivePath;
 
 	FTimerHandle GrowthTimerHandle;
+
+	void OnArcaneVisionChanged(const FGameplayTag Tag, int32 NewCount);
+
+	FDelegateHandle ArcaneVisionHandle;
 };

@@ -57,6 +57,28 @@ EDataValidationResult ATaeWorldManager::IsDataValid(FDataValidationContext& Cont
 		Result = EDataValidationResult::Invalid;
 	}
 
+	TSet<TObjectPtr<ATaeRootPath>> SeenPaths;
+	for (int32 Index = 0; Index < RootPaths.Num(); ++Index)
+	{
+		const TObjectPtr<ATaeRootPath>& Path = RootPaths[Index];
+		if (!Path)
+		{
+			Context.AddError(FText::FromString(FString::Printf(
+				TEXT("RootPaths[%d] is null — assign an ATaeRootPath actor or remove this entry"), Index)));
+			Result = EDataValidationResult::Invalid;
+			continue;
+		}
+
+		bool bAlreadyInSet = false;
+		SeenPaths.Add(Path, &bAlreadyInSet);
+		if (bAlreadyInSet)
+		{
+			Context.AddError(FText::FromString(FString::Printf(
+				TEXT("RootPaths[%d] duplicates an entry already in the array — remove the duplicate"), Index)));
+			Result = EDataValidationResult::Invalid;
+		}
+	}
+
 	return Result;
 }
 #endif
