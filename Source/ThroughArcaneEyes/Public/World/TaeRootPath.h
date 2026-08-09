@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "World/TaeConnectionTypes.h"
 #include "TaeRootPath.generated.h"
 
 class USplineComponent;
@@ -11,6 +12,8 @@ class USplineMeshComponent;
 class UTaeStateComponent;
 class UStaticMesh;
 class UMaterialInterface;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnConnectionStateChanged, ATaeRootPath*, Path, ETaeConnectionState, NewState);
 
 // Hidden root connection between two islands. Builds one USplineMeshComponent per spline segment in
 // OnConstruction (so it updates live as the spline is edited); reveal follows the same pattern as
@@ -25,6 +28,15 @@ public:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
+	// Advances growth by DeltaAlpha (negative shrinks). Clamped 0..1; broadcasts only on state change.
+	void AdvanceGrowth(float DeltaAlpha);
+
+	float GetGrowthAlpha() const { return GrowthAlpha; }
+	ETaeConnectionState GetConnectionState() const { return ConnectionState; }
+
+	UPROPERTY(BlueprintAssignable, Category = "RootPath")
+	FOnConnectionStateChanged OnConnectionStateChanged;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -34,11 +46,12 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnArcaneStateChanged(bool bArcaneActive);
+	void OnArcaneStateChanged(bool bInArcaneActive);
 
 	void RebuildSplineMeshes();
 
-	void SetSegmentsRevealed(bool bRevealed);
+	// Applies GrowthAlpha and Arcane state to segment visibility/collision
+	void RefreshSegments();
 
 	UPROPERTY(VisibleAnywhere, Category = "RootPath")
 	TObjectPtr<USplineComponent> Spline;
@@ -55,4 +68,13 @@ private:
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<USplineMeshComponent>> SplineMeshSegments;
+
+	// Persists across Arcane toggles — growth is permanent and partial
+	UPROPERTY(VisibleAnywhere, Category = "RootPath")
+	float GrowthAlpha = 0.f;
+
+	UPROPERTY(VisibleAnywhere, Category = "RootPath")
+	ETaeConnectionState ConnectionState = ETaeConnectionState::Broken;
+
+	bool bArcaneActive = false;
 };

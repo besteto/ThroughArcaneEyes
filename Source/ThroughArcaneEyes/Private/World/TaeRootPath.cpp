@@ -4,6 +4,7 @@
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "Components/TaeStateComponent.h"
+#include "World/TaeConnectionTypes.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -76,23 +77,66 @@ void ATaeRootPath::BeginPlay()
 
 	// Segments stay visible in the editor so the spline can be authored; they only hide once play starts,
 	// same as ATaeGridCube's bStartHidden handling.
-	SetSegmentsRevealed(false);
+	RefreshSegments();
 }
 
-void ATaeRootPath::OnArcaneStateChanged(bool bArcaneActive)
+void ATaeRootPath::AdvanceGrowth(const float DeltaAlpha)
 {
-	SetSegmentsRevealed(bArcaneActive);
-}
-
-void ATaeRootPath::SetSegmentsRevealed(const bool bRevealed)
-{
-	for (USplineMeshComponent* Segment : SplineMeshSegments)
+	const float NewAlpha = FTaeGrowthStep::Advance(GrowthAlpha, DeltaAlpha);
+	if (FMath::IsNearlyEqual(NewAlpha, GrowthAlpha))
 	{
-		if (Segment)
+		return;
+	}
+
+	GrowthAlpha = NewAlpha;
+
+	const ETaeConnectionState NewState = FTaeGrowthStep::StateFor(GrowthAlpha);
+	const bool bStateChanged = NewState != ConnectionState;
+	ConnectionState = NewState;
+
+	RefreshSegments();
+
+	if (bStateChanged)
+	{
+		OnConnectionStateChanged.Broadcast(this, ConnectionState);
+	}
+}
+
+void ATaeRootPath::OnArcaneStateChanged(const bool bInArcaneActive)
+{
+	bArcaneActive = bInArcaneActive;
+	RefreshSegments();
+}
+
+void ATaeRootPath::RefreshSegments()
+{
+	const int32 NumSegments = SplineMeshSegments.Num();
+	if (NumSegments == 0)
+	{
+		return;
+	}
+
+	// Segments materialise in order as the root grows
+	const float GrownSegments = GrowthAlpha * static_cast<float>(NumSegments);
+
+	for (int32 Index = 0; Index < NumSegments; ++Index)
+	{
+		USplineMeshComponent* Segment = SplineMeshSegments[Index];
+		if (!Segment)
 		{
-			Segment->SetVisibility(bRevealed);
-			Segment->SetCollisionEnabled(bRevealed ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+			continue;
 		}
+
+		const bool bGrown = static_cast<float>(Index) < GrownSegments;
+
+		// Grown segments are solid in both modes; ungrown ones are ghosts only Arcane can see
+		const bool bVisible = bGrown || bArcaneActive;
+		const bool bCollides = bGrown;
+
+		Segment->SetVisibility(bVisible);
+		Segment->SetCollisionEnabled(bCollides
+			? ECollisionEnabled::QueryAndPhysics
+			: ECollisionEnabled::NoCollision);
 	}
 }
 
