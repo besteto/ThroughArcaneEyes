@@ -4,7 +4,7 @@
 
 **Goal:** Make the core loop playable — enter Arcane Vision, see a broken root connection, hold to grow it while mana drains, release early and keep partial progress, return and finish, then walk across it in Forest mode.
 
-**Architecture:** State lives on `ATaeRootPath` (`EConnectionState` + `GrowthAlpha`); `ATaeWorldManager` is a registry that counts and broadcasts. GAS owns the verb (`UGA_GrowRoot` inheriting `UTaeGameplayAbility`) because mana cost and cancellation already live there. A single `ArcaneBlendAlpha` on `UTaeArcaneSubsystem` drives post-process, camera, and (later) the overlay so they cannot disagree on timing.
+**Architecture:** State lives on `ATaeRootPath` (`ETaeConnectionState` + `GrowthAlpha`); `ATaeWorldManager` is a registry that counts and broadcasts. GAS owns the verb (`UGA_GrowRoot` inheriting `UTaeGameplayAbility`) because mana cost and cancellation already live there. A single `ArcaneBlendAlpha` on `UTaeArcaneSubsystem` drives post-process, camera, and (later) the overlay so they cannot disagree on timing.
 
 **Tech Stack:** UE 5.8 C++, GAS (`GameplayAbilities`), Enhanced Input, `GameplayCameras`, UE Automation Tests. No `PoseSearch`, no `UAF/*`, no `Mover` — all experimental in 5.8.
 
@@ -44,7 +44,13 @@ Expected on success: log contains `Test Completed. Result={Passed}` and no `Resu
 
 | File | Responsibility |
 |---|---|
-| `Public/World/TaeConnectionTypes.h` | **Create.** `EConnectionState` enum + `FTaeGrowthStep` pure growth math. No actor dependencies, so it is unit-testable without a world. |
+| `Public/World/TaeConnectionTypes.h` | **Create.** `ETaeConnectionState` enum + `FTaeGrowthStep` pure growth math. No actor dependencies, so it is unit-testable without a world. |
+
+> **Correction, applied during execution:** this plan originally named the enum `EConnectionState`. That
+> collides with the engine's own unscoped `enum EConnectionState` in
+> `Engine/Classes/Engine/NetConnection.h:94` (`USOCK_*`, with an `ENGINE_API LexToString` overload),
+> which is reachable from common engine headers. Renamed to `ETaeConnectionState` — which also matches
+> the project's `Tae` prefix convention. All tasks below use the corrected name.
 | `Private/World/TaeConnectionTypes.cpp` | **Create.** `FTaeGrowthStep::Advance` implementation. |
 | `Private/Tests/TaeConnectionTypesTest.cpp` | **Create.** Automation tests for growth math. |
 | `Private/Tests/TaeBlendAlphaTest.cpp` | **Create.** Automation tests for the Arcane blend interpolation. |
@@ -54,7 +60,7 @@ Expected on success: log contains `Test Completed. Result={Passed}` and no `Resu
 | `Public/GAS/GA_GrowRoot.h` / `.cpp` | **Create.** The channel ability — mana drain per second, advances the target path. |
 | `Public/GAS/TaeGASTypes.h` / `.cpp` | **Modify.** Add `TAG_Arcane_Growing`. |
 | `Public/Core/TaeArcaneSubsystem.h` / `.cpp` | **Modify.** `UTickableWorldSubsystem`, `ArcaneBlendAlpha`, post-process via `BlendWeight`, vignette interpolation fix. |
-| `Public/Character/TaePlayerController.h` / `.cpp` | **Modify.** `IA_GrowRoot` property + `DoGrowRoot` / `DoStopGrowRoot`. |
+| `Public/Character/TaePlayerController.h` / `.cpp` | **Modify.** `GrowRootAction` property + `DoGrowRoot` / `DoStopGrowRoot`. |
 | `Public/Character/TaeCharacter.h` / `.cpp` | **Modify.** Expose `GrowRootHandle` alongside `SpectralShiftHandle`. |
 | `ThroughArcaneEyes.Build.cs` | **Modify.** Add `GameplayCameras`. |
 
@@ -139,9 +145,9 @@ Pure functions first — no actor, no world, fully testable. Every growth rule t
 **Interfaces:**
 - Consumes: Task 1's test conventions.
 - Produces:
-  - `enum class EConnectionState : uint8 { Broken, Growing, Restored }`
+  - `enum class ETaeConnectionState : uint8 { Broken, Growing, Restored }`
   - `FTaeGrowthStep::Advance(float CurrentAlpha, float DeltaAlpha) -> float` (clamped 0..1)
-  - `FTaeGrowthStep::StateFor(float Alpha) -> EConnectionState`
+  - `FTaeGrowthStep::StateFor(float Alpha) -> ETaeConnectionState`
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -172,17 +178,21 @@ bool FTaeGrowthStepTest::RunTest(const FString& Parameters)
 
 	// State thresholds
 	TestTrue(TEXT("zero is broken"),
-		FTaeGrowthStep::StateFor(0.f) == EConnectionState::Broken);
+		FTaeGrowthStep::StateFor(0.f) == ETaeConnectionState::Broken);
 	TestTrue(TEXT("partial is growing"),
-		FTaeGrowthStep::StateFor(0.5f) == EConnectionState::Growing);
+		FTaeGrowthStep::StateFor(0.5f) == ETaeConnectionState::Growing);
 	TestTrue(TEXT("one is restored"),
-		FTaeGrowthStep::StateFor(1.f) == EConnectionState::Restored);
+		FTaeGrowthStep::StateFor(1.f) == ETaeConnectionState::Restored);
 
 	// Boundary: anything above zero has begun, only exactly-full is restored
 	TestTrue(TEXT("epsilon above zero is growing"),
-		FTaeGrowthStep::StateFor(KINDA_SMALL_NUMBER * 2.f) == EConnectionState::Growing);
+		FTaeGrowthStep::StateFor(KINDA_SMALL_NUMBER * 2.f) == ETaeConnectionState::Growing);
 	TestTrue(TEXT("just under one is still growing"),
-		FTaeGrowthStep::StateFor(0.999f) == EConnectionState::Growing);
+		FTaeGrowthStep::StateFor(0.999f) == ETaeConnectionState::Growing);
+
+	// Any alpha strictly above zero has begun growing, however small
+	TestTrue(TEXT("tiny alpha below epsilon is growing"),
+		FTaeGrowthStep::StateFor(0.00005f) == ETaeConnectionState::Growing);
 
 	return true;
 }
@@ -209,7 +219,7 @@ Create `Source/ThroughArcaneEyes/Public/World/TaeConnectionTypes.h`:
 // Lifecycle of one root connection. Growth is permanent and partial — a path that reaches Growing
 // never falls back to Broken on its own, only when explicitly reset.
 UENUM(BlueprintType)
-enum class EConnectionState : uint8
+enum class ETaeConnectionState : uint8
 {
 	Broken     UMETA(DisplayName = "Broken"),
 	Growing    UMETA(DisplayName = "Growing"),
@@ -223,7 +233,7 @@ struct THROUGHARCANEEYES_API FTaeGrowthStep
 	static float Advance(float CurrentAlpha, float DeltaAlpha);
 
 	// Maps an alpha to its connection state.
-	static EConnectionState StateFor(float Alpha);
+	static ETaeConnectionState StateFor(float Alpha);
 };
 ```
 
@@ -241,19 +251,24 @@ float FTaeGrowthStep::Advance(const float CurrentAlpha, const float DeltaAlpha)
 	return FMath::Clamp(CurrentAlpha + DeltaAlpha, 0.f, 1.f);
 }
 
-EConnectionState FTaeGrowthStep::StateFor(const float Alpha)
+ETaeConnectionState FTaeGrowthStep::StateFor(const float Alpha)
 {
 	if (Alpha >= 1.f)
 	{
-		return EConnectionState::Restored;
+		return ETaeConnectionState::Restored;
 	}
-	if (Alpha > KINDA_SMALL_NUMBER)
+	if (Alpha > 0.f)
 	{
-		return EConnectionState::Growing;
+		return ETaeConnectionState::Growing;
 	}
-	return EConnectionState::Broken;
+	return ETaeConnectionState::Broken;
 }
 ```
+
+> **Correction, applied during execution:** this originally read `Alpha > KINDA_SMALL_NUMBER`, which
+> classified the band `(0, 1e-4]` as `Broken` and contradicted the documented contract. `StateFor` is a
+> pure classifier and should classify what it is handed — noise filtering belongs in `AdvanceGrowth`,
+> which already rejects sub-epsilon deltas via `IsNearlyEqual`. Ruled by the project owner.
 
 - [ ] **Step 5: Build and run tests**
 
@@ -277,19 +292,19 @@ git commit -m "[World][+] add connection state and growth math"
 - Modify: `Source/ThroughArcaneEyes/Private/World/TaeRootPath.cpp`
 
 **Interfaces:**
-- Consumes: `EConnectionState`, `FTaeGrowthStep` from Task 2.
+- Consumes: `ETaeConnectionState`, `FTaeGrowthStep` from Task 2.
 - Produces:
   - `ATaeRootPath::AdvanceGrowth(float DeltaAlpha) -> void`
   - `ATaeRootPath::GetGrowthAlpha() const -> float`
-  - `ATaeRootPath::GetConnectionState() const -> EConnectionState`
-  - `FOnConnectionStateChanged` (`DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams`, `ATaeRootPath*`, `EConnectionState`) exposed as `OnConnectionStateChanged`
+  - `ATaeRootPath::GetConnectionState() const -> ETaeConnectionState`
+  - `FOnConnectionStateChanged` (`DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams`, `ATaeRootPath*`, `ETaeConnectionState`) exposed as `OnConnectionStateChanged`
 
 - [ ] **Step 1: Add state to the header**
 
 In `TaeRootPath.h`, after the existing includes add `#include "World/TaeConnectionTypes.h"`, and above the `UCLASS()`:
 
 ```cpp
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnConnectionStateChanged, ATaeRootPath*, Path, EConnectionState, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnConnectionStateChanged, ATaeRootPath*, Path, ETaeConnectionState, NewState);
 ```
 
 In the `public:` section, after `OnConstruction`:
@@ -299,7 +314,7 @@ In the `public:` section, after `OnConstruction`:
 	void AdvanceGrowth(float DeltaAlpha);
 
 	float GetGrowthAlpha() const { return GrowthAlpha; }
-	EConnectionState GetConnectionState() const { return ConnectionState; }
+	ETaeConnectionState GetConnectionState() const { return ConnectionState; }
 
 	UPROPERTY(BlueprintAssignable, Category = "RootPath")
 	FOnConnectionStateChanged OnConnectionStateChanged;
@@ -313,7 +328,7 @@ In the `private:` section, alongside the existing properties:
 	float GrowthAlpha = 0.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "RootPath")
-	EConnectionState ConnectionState = EConnectionState::Broken;
+	ETaeConnectionState ConnectionState = ETaeConnectionState::Broken;
 
 	// Applies GrowthAlpha and Arcane state to segment visibility/collision
 	void RefreshSegments();
@@ -333,14 +348,16 @@ Replace `SetSegmentsRevealed` and `OnArcaneStateChanged` in `TaeRootPath.cpp` wi
 void ATaeRootPath::AdvanceGrowth(const float DeltaAlpha)
 {
 	const float NewAlpha = FTaeGrowthStep::Advance(GrowthAlpha, DeltaAlpha);
-	if (FMath::IsNearlyEqual(NewAlpha, GrowthAlpha))
+	// Exact comparison is correct: Advance is deterministic and returns the clamped result, so equality
+	// means nothing changed. A tolerance here would discard small deltas instead of accumulating them.
+	if (NewAlpha == GrowthAlpha)
 	{
 		return;
 	}
 
 	GrowthAlpha = NewAlpha;
 
-	const EConnectionState NewState = FTaeGrowthStep::StateFor(GrowthAlpha);
+	const ETaeConnectionState NewState = FTaeGrowthStep::StateFor(GrowthAlpha);
 	const bool bStateChanged = NewState != ConnectionState;
 	ConnectionState = NewState;
 
@@ -591,7 +608,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void HandleConnectionStateChanged(ATaeRootPath* Path, EConnectionState NewState);
+	void HandleConnectionStateChanged(ATaeRootPath* Path, ETaeConnectionState NewState);
 
 	void RecountRestored();
 
@@ -638,7 +655,7 @@ void ATaeWorldManager::BeginPlay()
 	OnNetworkChanged.Broadcast(RestoredCount, GetRequiredCount());
 }
 
-void ATaeWorldManager::HandleConnectionStateChanged(ATaeRootPath* Path, EConnectionState NewState)
+void ATaeWorldManager::HandleConnectionStateChanged(ATaeRootPath* Path, ETaeConnectionState NewState)
 {
 	RecountRestored();
 	OnNetworkChanged.Broadcast(RestoredCount, GetRequiredCount());
@@ -649,7 +666,7 @@ void ATaeWorldManager::RecountRestored()
 	RestoredCount = 0;
 	for (const TObjectPtr<ATaeRootPath>& Path : RootPaths)
 	{
-		if (Path && Path->GetConnectionState() == EConnectionState::Restored)
+		if (Path && Path->GetConnectionState() == ETaeConnectionState::Restored)
 		{
 			++RestoredCount;
 		}
@@ -822,8 +839,8 @@ float UTaeArcaneSubsystem::StepBlendAlpha(const float Current, const float Targe
 		return Target;
 	}
 
-	const float Step = DeltaTime / Duration;
-	return FMath::FInterpConstantTo(Current, Target, 1.f, Step);
+	// A speed of 1/Duration traverses the full 0..1 range in exactly Duration seconds.
+	return FMath::FInterpConstantTo(Current, Target, DeltaTime, 1.f / Duration);
 }
 
 void UTaeArcaneSubsystem::SetArcaneActive(const bool bActive)
@@ -1005,7 +1022,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<ATaeRootPath> ActivePath;
 
-	float GrowthDirection = 1.f;
+	// (removed during execution — see the growth-direction correction note below)
 	FTimerHandle GrowthTimerHandle;
 };
 ```
@@ -1103,7 +1120,7 @@ void UGA_GrowRoot::ActivateAbility(
 	}
 
 	ActivePath = Anchor->GetPath();
-	GrowthDirection = Anchor->GetGrowthDirection();
+	// (GrowthDirection assignment removed during execution — both ends grow positively)
 
 	UWorld* World = GetWorld();
 	if (!World)
@@ -1126,7 +1143,7 @@ void UGA_GrowRoot::TickGrowth()
 	}
 
 	// Out of mana ends the channel; progress so far is kept
-	const float Mana = ASC->GetNumericAttribute(UTaeManaAttributeSet::GetManaAttribute());
+	const float Mana = ASC->GetNumericAttributeBase(UTaeManaAttributeSet::GetManaAttribute());
 	const float ManaThisTick = ManaCostPerSecond * GrowthTickInterval;
 	if (Mana < ManaThisTick)
 	{
@@ -1135,14 +1152,26 @@ void UGA_GrowRoot::TickGrowth()
 	}
 
 	ASC->SetNumericAttributeBase(UTaeManaAttributeSet::GetManaAttribute(), Mana - ManaThisTick);
-	ActivePath->AdvanceGrowth(GrowthRate * GrowthTickInterval * GrowthDirection);
+	ActivePath->AdvanceGrowth(GrowthRate * GrowthTickInterval);
 
 	// Finished — stop rather than burning mana on a full path
-	if (ActivePath->GetConnectionState() == EConnectionState::Restored && GrowthDirection > 0.f)
+	if (ActivePath->GetConnectionState() == ETaeConnectionState::Restored)
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	}
 }
+```
+
+> **Correction, applied during execution:** `AdvanceGrowth` originally multiplied by
+> `Anchor->GetGrowthDirection()`, and the completion check required `GrowthDirection > 0.f`. Because
+> `GrowthAlpha` is a single scalar clamped to [0,1], a far-end anchor's negative delta clamped straight
+> back to 0 while mana had *already* been deducted — an invisible mana drain that could never
+> self-terminate, and on a partly-grown path it undid the other end's progress. Ruled by the project
+> owner: both ends add positive growth to the shared alpha, which means "how restored this connection
+> is". `bGrowsForward` stays on `ATaeRootAnchor` as level data reserved for choosing which spline end
+> materialises first in a later milestone; it is not consumed yet.
+
+```cpp
 
 void UGA_GrowRoot::EndAbility(
 	const FGameplayAbilitySpecHandle Handle,
@@ -1161,18 +1190,25 @@ void UGA_GrowRoot::EndAbility(
 }
 ```
 
-> `EConnectionState` reaches this file via `TaeRootPath.h`, which includes `TaeConnectionTypes.h`.
+> `ETaeConnectionState` reaches this file via `TaeRootPath.h`, which includes `TaeConnectionTypes.h`.
 
 - [ ] **Step 4: Expose the ability on the character**
 
 In `TaeCharacter.h`, beside the existing `SpectralShiftAbility` / `SpectralShiftHandle` members, add matching ones:
 
 ```cpp
-	UPROPERTY(EditDefaultsOnly, Category = "Tae|Abilities")
-	TSubclassOf<class UTaeGameplayAbility> GrowRootAbility;
+	UPROPERTY(EditDefaultsOnly, Category = "GAS")
+	TSubclassOf<UGameplayAbility> GrowRootAbility;
 
 	FGameplayAbilitySpecHandle GrowRootHandle;
 ```
+
+> **Correction, applied during execution:** the snippets in Steps 4–5 originally used `Category =
+> "Tae|Abilities"` and a property named `IA_GrowRoot`. Neither matched the repo. The real conventions are
+> `Category = "GAS"` and `<Mechanic>Action` property names (`MoveAction`, `SpectralShiftAction`,
+> `PauseAction`), with a public `GetGrowRootHandle()` getter mirroring `GetSpectralShiftHandle()`, and
+> null-checking via the centralized `IsDataValid` rather than per-bind warnings. The implementer
+> correctly mirrored the real code over these snippets.
 
 In `TaeCharacter.cpp` `BeginPlay`, mirror the existing `GiveAbility` call for `SpectralShiftAbility`, storing the result in `GrowRootHandle` and guarding on `GrowRootAbility` being set with a `LogTae` warning if not.
 
@@ -1181,8 +1217,8 @@ In `TaeCharacter.cpp` `BeginPlay`, mirror the existing `GiveAbility` call for `S
 In `TaePlayerController.h`, beside the existing input action properties:
 
 ```cpp
-	UPROPERTY(EditAnywhere, Category = "Tae|Input")
-	TObjectPtr<UInputAction> IA_GrowRoot;
+	UPROPERTY(EditAnywhere, Category = "Tae")
+	TObjectPtr<UInputAction> GrowRootAction;
 ```
 
 and beside the existing handlers:
@@ -1195,15 +1231,8 @@ and beside the existing handlers:
 In `TaePlayerController.cpp` `SetupInputComponent`, bind following the existing pattern:
 
 ```cpp
-	if (IA_GrowRoot)
-	{
-		EnhancedInput->BindAction(IA_GrowRoot, ETriggerEvent::Started, this, &ThisClass::DoGrowRoot);
-		EnhancedInput->BindAction(IA_GrowRoot, ETriggerEvent::Completed, this, &ThisClass::DoStopGrowRoot);
-	}
-	else
-	{
-		UE_LOG(LogTae, Warning, TEXT("[PC] IA_GrowRoot is NULL — assign it in BP_TaePlayerController"));
-	}
+	EnhancedInput->BindAction(GrowRootAction, ETriggerEvent::Started, this, &ThisClass::DoGrowRoot);
+	EnhancedInput->BindAction(GrowRootAction, ETriggerEvent::Completed, this, &ThisClass::DoStopGrowRoot);
 ```
 
 and the handlers:
@@ -1284,7 +1313,11 @@ Run the build command. Expected: `Result: Succeeded` with no "does not list plug
 
 - [ ] **Step 3: Create the input asset**
 
-In the editor, create `Content/Character/Input/IA_GrowRoot` (`UInputAction`, Digital bool). Add it to `IMC_Default` bound to **E** and to Gamepad Face Button Right. Assign it to `IA_GrowRoot` on `BP_TaePlayerController`.
+In the editor, create `Content/Character/Input/IA_GrowRoot` (`UInputAction`, Digital bool). Add it to `IMC_Default` bound to **E** and to Gamepad Face Button Right. Assign it to the **`GrowRootAction`** property on `BP_TaePlayerController` (Details > Tae).
+
+> The asset is `IA_GrowRoot` (matching the `IA_` asset convention); the C++ property it plugs into is
+> `GrowRootAction`, matching `MoveAction` / `SpectralShiftAction` / `PauseAction`. Do not go looking for
+> a property called `IA_GrowRoot` — there isn't one.
 
 - [ ] **Step 4: Create the ability and world Blueprints**
 
@@ -1341,7 +1374,7 @@ git commit -m "[World][+] add island pair, root path content and arcane camera r
 
 | M1 requirement | Task |
 |---|---|
-| `ATaeRootPath` gains `EConnectionState` + `GrowthAlpha` | 2, 3 |
+| `ATaeRootPath` gains `ETaeConnectionState` + `GrowthAlpha` | 2, 3 |
 | `ATaeRootAnchor` marker actor | 4 |
 | `ATaeWorldManager` registry with `OnNetworkChanged` | 5 |
 | `UGA_GrowRoot` + `IA_GrowRoot` + `DoGrowRoot`, mana drain, partial persistence | 7, 8 |
@@ -1352,6 +1385,6 @@ git commit -m "[World][+] add island pair, root path content and arcane camera r
 
 **Deliberately out of M1:** the Slate overlay, `UTaeArcanePalette`, chromatic aberration and vignette reproduction in paint (all M3); Control Rig (M2); PCG and the retirement list (M4); win condition and save game (M5).
 
-**Type consistency:** `GrowthAlpha` is the property name in Tasks 3, 7, 8. `AdvanceGrowth` in 3 and 7. `GetConnectionState()` in 3, 5, 7. `StepBlendAlpha` in 6 only. `EConnectionState::Restored` in 3, 5, 7. `GetArcaneBlendAlpha()` produced in 6, consumed in 8.
+**Type consistency:** `GrowthAlpha` is the property name in Tasks 3, 7, 8. `AdvanceGrowth` in 3 and 7. `GetConnectionState()` in 3, 5, 7. `StepBlendAlpha` in 6 only. `ETaeConnectionState::Restored` in 3, 5, 7. `GetArcaneBlendAlpha()` produced in 6, consumed in 8.
 
 **Known risk carried into execution:** Task 7 assumes `UTaeManaAttributeSet` exposes `GetManaAttribute()` via the `ATTRIBUTE_ACCESSORS` macro and that `ATaeCharacter::GetAbilitySystemComponent()` is public. Both follow from the existing GAS setup, but the implementer should confirm the exact accessor names in `TaeManaAttributeSet.h` before writing `TickGrowth` rather than assuming the spelling.
