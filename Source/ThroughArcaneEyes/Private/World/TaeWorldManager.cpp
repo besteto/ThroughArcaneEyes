@@ -51,6 +51,13 @@ EDataValidationResult ATaeWorldManager::IsDataValid(FDataValidationContext& Cont
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 
+	// RootPaths is EditInstanceOnly — it can only ever be populated on a manager placed in a level,
+	// never on the Blueprint's class default object. Validating the template would fail permanently.
+	if (IsTemplate())
+	{
+		return Result;
+	}
+
 	if (RootPaths.IsEmpty())
 	{
 		Context.AddError(FText::FromString(TEXT("RootPaths is empty — assign the ATaeRootPath actors for this level")));

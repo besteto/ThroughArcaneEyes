@@ -24,6 +24,13 @@ EDataValidationResult ATaeRootAnchor::IsDataValid(FDataValidationContext& Contex
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
 
+	// Path is EditInstanceOnly — it can only ever be set on an anchor placed in a level, never on the
+	// Blueprint's class default object. Validating the template would fail permanently by construction.
+	if (IsTemplate())
+	{
+		return Result;
+	}
+
 	if (!Path)
 	{
 		Context.AddError(FText::FromString(TEXT("Path is not set — assign the ATaeRootPath this anchor grows")));
