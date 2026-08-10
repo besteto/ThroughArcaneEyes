@@ -15,3 +15,14 @@
 // Project-wide gameplay tags — defined in TaeGASTypes.cpp
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Arcane_Vision)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Arcane_Growing)
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Arcane_Exhausted)
+
+// Gameplay Cue tags. The matching Blueprint assets MUST be named so these derive from the asset name —
+// GC_Mana_Drain -> GameplayCue.Mana.Drain. See the M2 spec §6.
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Cue_Mana_Drain)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Cue_Mana_Regen)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Cue_Arcane_Exhausted)
+
+// SetByCaller key for the per-period mana delta on UTaeManaEffectBase
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Data_ManaRate)

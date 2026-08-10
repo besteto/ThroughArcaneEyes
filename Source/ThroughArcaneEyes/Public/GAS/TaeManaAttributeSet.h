@@ -18,6 +18,11 @@ public:
 
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
+	// Pure exhaustion state machine with hysteresis: exhaustion begins at empty and ends only once mana
+	// climbs back to RecoveryFraction of maximum. Static and ASC-free so both thresholds are tested
+	// together and cannot drift apart. Returns the new exhausted state.
+	static bool EvaluateExhaustion(float Mana, float MaxManaValue, float RecoveryFraction, bool bWasExhausted);
+
 	UPROPERTY(BlueprintReadOnly, Category = "Tae|Mana")
 	FGameplayAttributeData Mana;
 	ATTRIBUTE_ACCESSORS(UTaeManaAttributeSet, Mana)
