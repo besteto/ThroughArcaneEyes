@@ -49,6 +49,16 @@ State lives with the thing it describes: `ATaeRootPath` owns its own `GrowthAlph
 
 A single `ArcaneBlendAlpha` on `UTaeArcaneSubsystem` drives the post-process weight, the camera blend, and (later) the UI overlay from one interpolator, so the three can never disagree on timing.
 
+## 5. The Restoration Economy
+Two resources, two verbs — **Look** and **Plant**.
+
+* **Mana** fuels both seeing and growing, and regenerates only near land you have already restored. It is the pressure that gives Forest mode a purpose.
+* **Saplings** are not currency. Each is a specific living thing you found, revealed only through Arcane Vision, and it gates *where* you can grow rather than how much.
+
+Completing a connection re-runs that region's PCG graph: vegetation spawns, rust recedes, and new saplings appear where there was nothing. **You never farm — you heal, and healing produces.** The world you restore is what pays for restoring more of it.
+
+Full design in the **[restoration economy spec](docs/superpowers/specs/2026-08-11-restoration-economy-design.md)**.
+
 # 📅 Development Roadmap
 
 **Sprint 1 — Core Vertical Slice** ✅ Complete
@@ -70,10 +80,10 @@ recordable demo rather than a calendar. Full design in
 | Milestone | Focus | Status |
 |-----------|-------|--------|
 | M1 | Connection Loop Playable | ✅ Done |
-| M2 | Ant Moves Like A Tree — Control Rig | ⬜ Not started |
-| M3 | The Network Is Legible — Slate overlay | ⬜ Not started |
-| M4 | Islands Become Generated — PCG | ⬜ Not started |
-| M5 | World, Progression, Polish — win state, save, audio | ⬜ Not started |
+| M2 | Mana Has Teeth — resource economy, GAS effects | ⬜ Not started |
+| M3 | Arcane As A Sense — Slate overlay + sapling reveal | ⬜ Not started |
+| M4 | The World Heals — PCG restoration | ⬜ Not started |
+| M5 | Progression & Polish — win state, save, audio, Control Rig | ⬜ Not started |
 
 **M1 gate:** reveal a broken root in Arcane Vision, channel it to half growth, release, return, finish
 it, then walk across it in normal mode — verified in-editor.
@@ -82,7 +92,8 @@ it, then walk across it in normal mode — verified in-editor.
 
 | File | Contents |
 |------|----------|
-| [docs/superpowers/specs/2026-08-10-connection-loop-design.md](docs/superpowers/specs/2026-08-10-connection-loop-design.md) | **Current design authority.** Connection loop, milestones M1–M5, decisions and rejected alternatives |
+| [docs/superpowers/specs/2026-08-11-restoration-economy-design.md](docs/superpowers/specs/2026-08-11-restoration-economy-design.md) | **Current design authority.** Resource economy, core loop, and the M2–M5 sequencing |
+| [docs/superpowers/specs/2026-08-10-connection-loop-design.md](docs/superpowers/specs/2026-08-10-connection-loop-design.md) | Connection loop and growth mechanic — still authoritative for M1; its milestone ordering is superseded |
 | [docs/superpowers/plans/2026-08-10-m1-connection-loop.md](docs/superpowers/plans/2026-08-10-m1-connection-loop.md) | M1 implementation plan, with corrections applied during execution |
 | [docs/Roadmap.md](docs/Roadmap.md) | Sprint 1 record + per-day checklists *(Days 6–9 superseded by the spec)* |
 | [docs/LevelGeneration.md](docs/LevelGeneration.md) | Level dressing design: `ATaeClutterScatter`, interactable spawners *(island approach superseded by the spec's hybrid PCG)* |

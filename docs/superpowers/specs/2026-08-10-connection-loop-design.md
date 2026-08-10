@@ -295,6 +295,10 @@ Slate and editor tooling modules.
 Each ends in something recordable. No calendar estimates. Ordered so the core loop is playable before
 any polish, which also de-risks the PCG and Control Rig learning curves.
 
+> **Superseded for sequencing (2026-08-11):** M2–M5 below are replaced by the milestones in
+> [the restoration economy spec](2026-08-11-restoration-economy-design.md). This spec remains
+> authoritative for the connection loop and growth mechanic themselves, which shipped in M1 unchanged.
+
 > This spec describes a program, not a single implementation plan. **M1 is the first plan unit**; each
 > later milestone gets its own plan when its predecessor's gate is met. Milestones after M1 are
 > deliberately less detailed — they will be re-specified against what M1 actually teaches.
