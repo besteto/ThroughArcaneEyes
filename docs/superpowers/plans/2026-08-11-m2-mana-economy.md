@@ -32,12 +32,21 @@
 ```
 Expected on success: `Result: Succeeded`.
 
-**Test command:**
+**Test command** (verified against the baseline run on 2026-08-11):
 
 ```powershell
 & 'D:\EpicGames\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' "D:\PetProjects\ThroughArcaneEyes\ThroughArcaneEyes.uproject" -ExecCmds="Automation RunTests ThroughArcaneEyes; Quit" -unattended -nopause -nullrhi -nosplash -log
+Select-String -Path "D:\PetProjects\ThroughArcaneEyes\Saved\Logs\ThroughArcaneEyes.log" -Pattern "Found \d+ automation tests|Test Completed" | ForEach-Object { $_.Line }
 ```
-Expected on success: log contains `Test Completed. Result={Passed}` and no `Result={Failed}`.
+
+**Two things that will waste your time if you skip them:**
+
+1. **Results do not go to stdout.** The command's console output contains only UBT SDK-validation noise. Every test result lands in `Saved/Logs/ThroughArcaneEyes.log`, which is why the `Select-String` line above is part of the command, not optional.
+2. **The engine prints `Result={Success}`, not `Result={Passed}`.** A failing test prints `Result={Fail}`.
+
+Expected on success: one `Test Completed. Result={Success}` line per test, a `Found N automation tests` line where N matches the number you expect, and no `Result={Fail`.
+
+Baseline before M2 (branch `feature/m2-mana-economy` at `527129e`): 3 tests — `Core.BlendAlpha`, `Harness.Sanity`, `World.GrowthStep` — all `Success`.
 
 Single test: replace `ThroughArcaneEyes` in `RunTests` with the full test name, e.g. `ThroughArcaneEyes.GAS.ManaExhaustion`.
 
@@ -202,7 +211,7 @@ bool UTaeManaAttributeSet::EvaluateExhaustion(const float Mana, const float MaxM
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run the build command, then the test command with `ThroughArcaneEyes.GAS.ManaExhaustion`.
-Expected: `Test Completed. Result={Passed}`.
+Expected: `Test Completed. Result={Success}` for that test (read it out of `Saved/Logs/ThroughArcaneEyes.log`, not stdout).
 
 - [ ] **Step 6: Commit**
 
@@ -494,7 +503,7 @@ UTaeManaRegenEffect::UTaeManaRegenEffect()
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run the build command, then the test command with `ThroughArcaneEyes.GAS.ManaEffects`.
-Expected: `Test Completed. Result={Passed}`.
+Expected: `Test Completed. Result={Success}` for that test (read it out of `Saved/Logs/ThroughArcaneEyes.log`, not stdout).
 
 - [ ] **Step 6: Commit**
 
@@ -789,7 +798,7 @@ In `EndAbility`, beside the timer clear:
 - [ ] **Step 5: Build and verify in PIE**
 
 Run the build command, then the test command (the M1 growth tests must still pass).
-Expected: `Result: Succeeded` and no `Result={Failed}`.
+Expected: `Result: Succeeded`, and no `Result={Fail` in `Saved/Logs/ThroughArcaneEyes.log`.
 
 PIE into `WorldNull`. Enter Arcane, stand at an anchor, and channel.
 Expected: mana falls at roughly 16 per second while channelling (4 vision + 12 growth) and returns to roughly 4 per second on release, with growth progress preserved.
@@ -1068,7 +1077,7 @@ EDataValidationResult UTaeGroveComponent::IsDataValid(FDataValidationContext& Co
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run the build command, then the test command with `ThroughArcaneEyes.World.GroveRegen`.
-Expected: `Test Completed. Result={Passed}`.
+Expected: `Test Completed. Result={Success}` for that test (read it out of `Saved/Logs/ThroughArcaneEyes.log`, not stdout).
 
 - [ ] **Step 6: Commit**
 
@@ -1279,7 +1288,7 @@ Add `RefreshManaPercent();` to the end of the existing `SetMana`.
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run the build command, then the test command with `ThroughArcaneEyes.UI.ManaFlow`.
-Expected: `Test Completed. Result={Passed}`.
+Expected: `Test Completed. Result={Success}` for that test (read it out of `Saved/Logs/ThroughArcaneEyes.log`, not stdout).
 
 - [ ] **Step 6: Commit**
 
@@ -1457,7 +1466,7 @@ Note: push `SetMaxMana` **before** the existing `SetMana` call so the first perc
 - [ ] **Step 4: Build and run the full suite**
 
 Run the build command, then the test command.
-Expected: `Result: Succeeded` and no `Result={Failed}`.
+Expected: `Result: Succeeded`, and no `Result={Fail` in `Saved/Logs/ThroughArcaneEyes.log`.
 
 - [ ] **Step 5: Commit**
 
@@ -1716,7 +1725,7 @@ Append a short "Tuned values (M2 gate)" section to `docs/superpowers/specs/2026-
 - [ ] **Step 5: Run the full suite one last time**
 
 Run the build command, then the test command.
-Expected: `Result: Succeeded`, and `Result={Passed}` for all five tests — `ManaExhaustion`, `ManaEffects`, `GroveRegen`, `ManaFlow`, plus the M1 `ConnectionTypes` and `BlendAlpha`.
+Expected: `Result: Succeeded`, and `Found 7 automation tests` with `Result={Success}` on every one — the four new tests `GAS.ManaExhaustion`, `GAS.ManaEffects`, `World.GroveRegen`, `UI.ManaFlow`, plus the three from the baseline: `Core.BlendAlpha`, `Harness.Sanity`, `World.GrowthStep`.
 
 - [ ] **Step 6: Commit**
 
@@ -1734,5 +1743,5 @@ git commit -m "[Docs][*] record M2 vocabulary, cue naming, and tuned rates"
 - A grove regenerates mana at a rate derived from its footprint, inhibited while Arcane is active.
 - The HUD reports amount, flow, and exhaustion through MVVM.
 - All three `GC_*` cue Blueprints appear in `GameplayCue.PrintLoadedGameplayCueNotifyClasses`.
-- Five automation tests pass headless.
+- Seven automation tests pass headless — four new, three inherited from M1.
 - The gate clip exists.
