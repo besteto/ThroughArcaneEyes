@@ -83,7 +83,7 @@ UTaeManaDrainEffect           NEW. Infinite, Period 0.1s, SetByCaller "Rate"
 
 UTaeManaRegenEffect           NEW. same shape, positive magnitude
   applied by UTaeGroveComponent   rate = RegenRateForArea(footprint)
-  OngoingTagRequirements          ignore Arcane.Vision — inhibited, not removed
+  TargetTagRequirements component  ignore Arcane.Vision — inhibited, not removed
   cue GameplayCue.Mana.Regen
 
 UTaeGroveComponent            NEW : UBoxComponent — a patch of living land
@@ -103,8 +103,11 @@ one.
 
 **Regen is suppressed while Arcane Vision is active.** Standing in a grove does not refill you mid-survey;
 you have to drop back to Forest to recover, which is the pressure the whole milestone exists to create.
-This is expressed as an `OngoingTagRequirements` block on `Arcane.Vision` rather than by removing and
+This is expressed as an ongoing tag requirement blocking on `Arcane.Vision` rather than by removing and
 reapplying the effect, so the player never has to leave and re-enter the volume to resume regenerating.
+`UGameplayEffect::OngoingTagRequirements` is deprecated in 5.8 (`GameplayEffect.h:2360`), so it goes
+through `UTargetTagRequirementsGameplayEffectComponent`, added in the constructor via
+`FindOrAddComponent<T>()`.
 
 ### Tags
 
@@ -204,10 +207,36 @@ A static notify is stateless and receives only the target actor, so it reaches t
 everything else does: target → `UTaeGameInstance` → `UTaeHudViewModel`. The cue never touches a widget
 directly.
 
-> **Verify early.** `UGameplayCueNotify_Static` discovery is convention-driven, and registering a cue from
-> a pure C++ CDO is the one piece of this design not already proven in the codebase. Confirm registration
-> before building the notifies out. Fallback: thin Blueprint cue assets parented to the C++ classes, which
-> matches the existing `UGA_SpectralShift` → `BP_GA_SpectralShift` split.
+### Cue registration is asset-driven — resolved 2026-08-11
+
+Checked against the engine rather than assumed. `UGameplayCueManager` builds its global cue set from an
+**asset registry scan** (`GameplayCueManager.cpp:830-896`), keyed on the `AssetRegistrySearchable`
+`GameplayCueName` field. Pure C++ notify classes are not assets, so they are never discovered.
+
+There is a second trap. `UAbilitySystemGlobals::DeriveGameplayCueTagFromClass`
+(`AbilitySystemGlobals.h:123-145`) special-cases a child whose tag merely equals its parent's: it clears
+the tag, tries to derive one from the asset name, and on failure restores the parent tag **and returns
+early, leaving `GameplayCueName` as `None`**. A Blueprint child that inherits its tag from a C++ parent is
+therefore registered under nothing.
+
+So the tag must derive from the **asset name**. `DeriveGameplayCueTagFromAssetName`
+(`AbilitySystemGlobals.cpp:135-150`) strips a `GC_` prefix, replaces `_` with `.`, prepends `GameplayCue.`
+if absent, and requires the result to be an already-registered tag:
+
+| Asset | Derives | Requires native tag |
+|---|---|---|
+| `GC_Mana_Drain` | `GameplayCue.Mana.Drain` | ✓ declared in `TaeGASTypes.h` |
+| `GC_Mana_Regen` | `GameplayCue.Mana.Regen` | ✓ |
+| `GC_Arcane_Exhausted` | `GameplayCue.Arcane.Exhausted` | ✓ |
+
+**Consequences, all binding:**
+
+- The C++ notify classes must leave `GameplayCueTag` **unset**, so derivation runs from the child's name.
+- Each cue needs a thin Blueprint asset in `Content/GAS/Cues/`, named exactly as above. This is the same
+  C++-logic / BP-asset split the project already uses for `UGA_SpectralShift` → `BP_GA_SpectralShift`.
+- Overrides are `const` (`OnActive_Implementation` and friends are `BlueprintPure`), which enforces the
+  stateless, idempotent notify the looping cue needs anyway.
+- Verify with the `GameplayCue.PrintLoadedGameplayCueNotifyClasses` console command.
 
 ---
 
@@ -250,9 +279,10 @@ an ASC, two abilities, and a subsystem, and mocking that costs more than it prov
 `PythonScriptPlugin` ships with 5.8 but is not enabled in `ThroughArcaneEyes.uproject`. M2 enables it.
 Scripts live in `Tools/Python/`.
 
-This is why decision 5 matters: with the Gameplay Effects in C++ and the cues in C++, the editor handoff
-shrinks to asset placement, which Python can do — creating `BP_Grove`, placing it in `WorldNull.umap`,
-saving.
+This is why decision 5 matters: with the Gameplay Effects in C++, the editor handoff shrinks to asset
+creation and placement, which Python does well — the three `GC_*` cue Blueprints required by §6, the
+`BP_Grove` actor, the regen curve asset, placing the grove in `WorldNull.umap`, saving. None of these
+carry Blueprint graph logic; they are empty subclasses and placed instances.
 
 **One step stays manual: the `WBP_HUD` mana bar.** Adding a progress bar and wiring its MVVM bindings is
 designer-surface work that Python handles badly. This is the whole residue of the M1-style handoff.
@@ -291,7 +321,7 @@ naming table gains a Gameplay Cue row (`GC_` / `UTaeCueNotify_`) and a note on `
 
 | Risk | Mitigation |
 |---|---|
-| C++ CDO Gameplay Cue registration may not be discovered by the cue manager | Verify before building the notifies out (§6). Fallback to thin BP cue assets — the standard path, and the one the project already uses for abilities |
+| ~~C++ CDO Gameplay Cue registration~~ | **Resolved** — checked against engine source; cue discovery is asset-registry driven, so thin BP assets named `GC_*` are required, not optional. See §6 |
 | Mana tuning is genuinely hard: two drains that stack, one regen source | Every rate `EditDefaultsOnly` (§5); tune in-editor before M3 content is built on top. The gate clip is the tuning target |
 | Two drain effects active at once may behave unexpectedly under GAS stacking rules | Default Infinite GEs do not stack; confirm both handles tick independently early, since the whole cost model rests on it |
 | The recovery floor could strand a player far from the grove with no way back | Acceptable in M2 — one grove, one island pair, short distances. M4's real regen zones remove the condition. Revisit only if the gate clip shows it |
