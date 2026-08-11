@@ -90,9 +90,25 @@ void ATaePlayerController::SetPawn(APawn* InPawn)
 			VM->SetMana(Data.NewValue);
 		});
 
+	// MaxMana attribute → MaxMana
+	ASC->GetGameplayAttributeValueChangeDelegate(UTaeManaAttributeSet::GetMaxManaAttribute())
+		.AddWeakLambda(VM, [VM](const FOnAttributeChangeData& Data)
+		{
+			VM->SetMaxMana(Data.NewValue);
+		});
+
+	// Exhausted tag → bExhausted
+	ASC->RegisterGameplayTagEvent(TAG_Arcane_Exhausted, EGameplayTagEventType::AnyCountChange)
+		.AddWeakLambda(VM, [VM](const FGameplayTag&, int32 Count)
+		{
+			VM->SetExhausted(Count > 0);
+		});
+
 	// Push current values immediately
 	VM->SetArcaneActive(ASC->HasMatchingGameplayTag(TAG_Arcane_Vision));
+	VM->SetMaxMana(ASC->GetNumericAttribute(UTaeManaAttributeSet::GetMaxManaAttribute()));
 	VM->SetMana(ASC->GetNumericAttribute(UTaeManaAttributeSet::GetManaAttribute()));
+	VM->SetExhausted(ASC->HasMatchingGameplayTag(TAG_Arcane_Exhausted));
 }
 
 void ATaePlayerController::DoMove(const FInputActionInstance& Action)
