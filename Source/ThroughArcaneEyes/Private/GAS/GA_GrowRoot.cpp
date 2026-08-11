@@ -2,7 +2,7 @@
 
 #include "GAS/GA_GrowRoot.h"
 #include "GAS/TaeGASTypes.h"
-#include "GAS/TaeManaAttributeSet.h"
+#include "GAS/TaeManaEffects.h"
 #include "World/TaeRootAnchor.h"
 #include "World/TaeRootPath.h"
 #include "AbilitySystemComponent.h"
@@ -13,6 +13,7 @@ UGA_GrowRoot::UGA_GrowRoot()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	ActivationOwnedTags.AddTag(TAG_Arcane_Growing);
+	DrainEffectClass = UTaeManaDrainEffect::StaticClass();
 }
 
 bool UGA_GrowRoot::CanActivateAbility(
@@ -99,6 +100,19 @@ void UGA_GrowRoot::ActivateAbility(
 
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
+		if (DrainEffectClass)
+		{
+			const FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+			const FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(DrainEffectClass, 1.f, Context);
+			if (Spec.IsValid())
+			{
+				// Stacks with the vision drain already applied by UGA_SpectralShift
+				Spec.Data->SetSetByCallerMagnitude(
+					TAG_Data_ManaRate, UTaeManaEffectBase::MagnitudePerPeriod(-ManaCostPerSecond));
+				DrainHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+			}
+		}
+
 		ArcaneVisionHandle = ASC->RegisterGameplayTagEvent(TAG_Arcane_Vision, EGameplayTagEventType::NewOrRemoved)
 			.AddUObject(this, &UGA_GrowRoot::OnArcaneVisionChanged);
 	}
@@ -115,23 +129,12 @@ void UGA_GrowRoot::OnArcaneVisionChanged(const FGameplayTag Tag, const int32 New
 
 void UGA_GrowRoot::TickGrowth()
 {
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-	if (!ActivePath || !ASC)
+	if (!ActivePath)
 	{
 		CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
 		return;
 	}
 
-	// Out of mana ends the channel; progress so far is kept
-	const float Mana = ASC->GetNumericAttributeBase(UTaeManaAttributeSet::GetManaAttribute());
-	const float ManaThisTick = ManaCostPerSecond * GrowthTickInterval;
-	if (Mana < ManaThisTick)
-	{
-		CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
-		return;
-	}
-
-	ASC->SetNumericAttributeBase(UTaeManaAttributeSet::GetManaAttribute(), Mana - ManaThisTick);
 	ActivePath->AdvanceGrowth(GrowthRate * GrowthTickInterval);
 
 	// Finished — stop rather than burning mana on a full path
@@ -153,6 +156,15 @@ void UGA_GrowRoot::EndAbility(
 		World->GetTimerManager().ClearTimer(GrowthTimerHandle);
 	}
 	ActivePath = nullptr;
+
+	if (DrainHandle.IsValid())
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			ASC->RemoveActiveGameplayEffect(DrainHandle);
+		}
+		DrainHandle.Invalidate();
+	}
 
 	if (ArcaneVisionHandle.IsValid())
 	{

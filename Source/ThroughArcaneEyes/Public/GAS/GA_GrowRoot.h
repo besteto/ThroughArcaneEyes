@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GAS/TaeGameplayAbility.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "GA_GrowRoot.generated.h"
 
 class ATaeRootAnchor;
 class ATaeRootPath;
+class UGameplayEffect;
 
 // Hold-to-channel root growth. Activates only while Arcane.Vision is active and the avatar overlaps an
 // ATaeRootAnchor. Drains mana per second and advances that anchor's path. Growth is permanent — ending
@@ -61,7 +63,13 @@ private:
 	UPROPERTY()
 	TObjectPtr<ATaeRootPath> ActivePath;
 
+	// Defaults to UTaeManaDrainEffect; overridable in BP_GA_GrowRoot
+	UPROPERTY(EditDefaultsOnly, Category = "GrowRoot")
+	TSubclassOf<UGameplayEffect> DrainEffectClass;
+
 	FTimerHandle GrowthTimerHandle;
+
+	FActiveGameplayEffectHandle DrainHandle;
 
 	void OnArcaneVisionChanged(const FGameplayTag Tag, int32 NewCount);
 
