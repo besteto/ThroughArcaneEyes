@@ -53,7 +53,8 @@ Single test: replace `ThroughArcaneEyes` in `RunTests` with the full test name, 
 ## Engine API notes (verified against 5.8 source — do not substitute from memory)
 
 - `EGameplayModOp::Additive` is a hidden backwards-compat alias. **Use `EGameplayModOp::AddBase`** (`GameplayEffectTypes.h:121`).
-- `UGameplayEffect::OngoingTagRequirements` is **deprecated** (`GameplayEffect.h:2360`). Use `UTargetTagRequirementsGameplayEffectComponent` via `FindOrAddComponent<T>()` (`GameplayEffect.h:2509`).
+- `UGameplayEffect::OngoingTagRequirements` is **deprecated** (`GameplayEffect.h:2360`). Use `UTargetTagRequirementsGameplayEffectComponent`.
+- **Do not create that component with `FindOrAddComponent<T>()` in a constructor** — it calls `NewObject` with `NAME_None` (`GameplayEffect.h:2500`), which is fatal inside a `UObject` constructor and crashes the editor at startup. Every engine call site is inside a `ConvertXComponent()` helper run from `PostCDOCompiled` (`GameplayEffect.cpp:529-825`). For a native GE, use `CreateDefaultSubobject` and add the result to the `protected` `GEComponents` array — `UGameplayEffect::PostInitProperties` explicitly expects this, ensuring with *"should be added to GEComponents during the constructor or in PostInitProperties"* (`GameplayEffect.cpp:236`). *(Found by Task 3's implementer hitting the crash; corrected 2026-08-11.)*
 - `UGameplayEffect::Period` is an `FScalableFloat` (`GameplayEffect.h:2268`).
 - A periodic modifier applies its magnitude **once per period, not per second**. Magnitude must be `Rate * PeriodSeconds`.
 - `FGameplayEffectModifierMagnitude` has an `FSetByCallerFloat` constructor (`GameplayEffect.h:304`); `FSetByCallerFloat::DataTag` is the tag-keyed form.
@@ -493,10 +494,15 @@ UTaeManaRegenEffect::UTaeManaRegenEffect()
 
 	// Standing in a grove does not refill you mid-survey. Inhibition keeps the effect applied, so
 	// leaving Arcane resumes regen without re-entering the volume.
-	// UGameplayEffect::OngoingTagRequirements is deprecated in 5.8 — this is the component form.
-	UTargetTagRequirementsGameplayEffectComponent& TagRequirements =
-		FindOrAddComponent<UTargetTagRequirementsGameplayEffectComponent>();
-	TagRequirements.OngoingTagRequirements.IgnoreTags.AddTag(TAG_Arcane_Vision);
+	//
+	// UGameplayEffect::OngoingTagRequirements is deprecated in 5.8, so the requirement lives on a
+	// component. It must be created with CreateDefaultSubobject rather than FindOrAddComponent:
+	// FindOrAddComponent calls NewObject with an empty name, which is fatal inside a constructor.
+	// UGameplayEffect::PostInitProperties expects native components to be made exactly this way.
+	UTargetTagRequirementsGameplayEffectComponent* TagRequirements =
+		CreateDefaultSubobject<UTargetTagRequirementsGameplayEffectComponent>(TEXT("TargetTagRequirements"));
+	TagRequirements->OngoingTagRequirements.IgnoreTags.AddTag(TAG_Arcane_Vision);
+	GEComponents.Add(TagRequirements);
 }
 ```
 
@@ -1580,88 +1586,68 @@ main()
 
 Expected: log lines `created: /Game/GAS/Cues/GC_Mana_Drain` (and the rest), ending in `M2 assets done`, with exit code 0.
 
-- [ ] **Step 4: Finish BP_Grove and verify cue registration in the editor**
+**Amended during implementation (2026-08-11).** The script grew past what this step describes: it also
+adds the `UTaeGroveComponent` to `BP_Grove` (via `SubobjectDataSubsystem`), sizes it, and assigns the
+curve — so `BP_Grove` needs no manual finishing. Two things it does *not* do:
 
-`BP_Grove` is created as a bare actor; the component and curve must be attached once:
+- **The regen curve is imported from a temporary CSV, not set directly.** `UCurveFloat::FloatCurve` is a
+  plain `UPROPERTY()` with no edit specifiers, so the Python scripting layer (which exposes only
+  `CPF_Edit` properties) cannot reach it. `CSVImportFactory` is the supported route.
+- **It does not place the grove in the level.** `EditorActorSubsystem.spawn_actor_from_object` crashes
+  the commandlet — `EXCEPTION_ACCESS_VIOLATION` inside `EditorFramework.dll`, immediately after
+  `load_level` returns. Actor placement wants a level-editor context `-run=pythonscript` never builds.
+  Placement moved to the editor handoff, which Task 11 covers.
 
-1. Open `/Game/World/BP_Grove`, **Add Component → Tae Grove Component**, and make it the root.
-2. Set its Box Extent to `(700, 700, 200)` — a 14 m × 14 m footprint, which is 196 m² and reads ≈ 9.9 mana/sec off the curve.
-3. Assign `Curve_GroveRegen` to `RegenCurve`. Compile and save.
-4. In the level, place the grove beside the starting island so it is reachable on foot from the first anchor.
-5. In the editor console run `GameplayCue.PrintLoadedGameplayCueNotifyClasses`.
+- [ ] **Step 4: Verify cue registration in the editor**
+
+In the editor console run `GameplayCue.PrintLoadedGameplayCueNotifyClasses`.
 
 Expected: the output lists all three `GC_*` classes. If any is missing, its asset name does not derive a registered tag — check the name against the table in spec §6.
 
-- [ ] **Step 5: Verify regen in PIE**
+- [ ] **Step 5: Commit**
 
-PIE into `WorldNull`. Drain mana to zero, then walk into the grove.
-Expected: mana climbs at roughly 10 per second, the HUD reports regenerating, Arcane becomes available again at 25 mana, and entering Arcane inside the grove **stops** the climb without needing to leave and re-enter the volume.
-
-- [ ] **Step 6: Commit**
+The level is not touched here — it changes in Task 11 along with the placement.
 
 ```powershell
-git add ThroughArcaneEyes.uproject Tools/Python/tae_m2_assets.py Content/GAS/Cues Content/World Content/Maps/WorldNull.umap
+git add ThroughArcaneEyes.uproject Tools/Python/tae_m2_assets.py Content/GAS/Cues Content/World
 git commit -m "[Config][+] enable python plugin and script the M2 editor assets"
 ```
 
 ---
 
-## Task 11: HUD mana bar
+## Task 11: The editor pass — grove placement and HUD mana bar
 
-The one step Python cannot do well. It is written as a handoff document so it can be executed and verified independently, in the same style as the M1 Task 8 handoff.
+Everything Python cannot do. Written as a handoff document so it can be executed and verified
+independently, in the same style as the M1 Task 8 handoff — which is why it lives beside that one in
+`docs/superpowers/plans/` rather than in `docs/issues/` as originally planned.
+
+Its scope grew past the HUD once Task 10's spawn crash pushed level placement here, so it also carries
+the verification and tuning steps that were split across Tasks 10 and 12.
 
 **Files:**
-- Create: `docs/issues/2026-08-11-m2-hud-handoff.md`
+- Create: [`docs/superpowers/plans/2026-08-11-m2-editor-handoff.md`](2026-08-11-m2-editor-handoff.md) — **written**
+- Modify: `Content/Maps/WorldNull.umap` (in-editor — place `BP_Grove`)
 - Modify: `Content/UI/Widgets/WBP_HUD.uasset` (in-editor)
 
 **Interfaces:**
-- Consumes: `UTaeHudViewModel::ManaPercent` / `ManaBarTint` / `ExhaustedVisibility` (Task 8).
-- Produces: a HUD that shows the economy.
+- Consumes: `UTaeHudViewModel::ManaPercent` / `ManaBarTint` / `ExhaustedVisibility` (Task 8); `BP_Grove` (Task 10).
+- Produces: a placed grove and a HUD that shows the economy.
 
-- [ ] **Step 1: Write the handoff document**
-
-Create `docs/issues/2026-08-11-m2-hud-handoff.md`:
-
-```markdown
-# M2 — WBP_HUD mana bar handoff
-
-The only M2 step that is not scripted. Everything else was created by `Tools/Python/tae_m2_assets.py`.
-
-## Steps
-
-1. Open `Content/UI/Widgets/WBP_HUD`.
-2. Add a `ProgressBar` named `ManaBar` beside the existing mana text.
-3. In **View Bindings**, bind:
-   - `ManaBar → Percent` to `UTaeHudViewModel::ManaPercent`
-   - `ManaBar → Fill Color and Opacity` to `UTaeHudViewModel::ManaBarTint`
-4. Add a `TextBlock` named `ExhaustedLabel` reading "DEPLETED".
-5. Bind `ExhaustedLabel → Visibility` to `UTaeHudViewModel::ExhaustedVisibility`.
-6. Compile and save.
-
-No converters are needed — every bound property is already in its presentation form.
-
-## Verify
-
-PIE into `WorldNull`:
-
-- The bar falls while Arcane Vision is held and tints toward orange.
-- The bar climbs and tints green inside the grove.
-- "DEPLETED" appears at zero mana and clears once the bar passes a quarter full.
-```
+- [x] **Step 1: Write the handoff document**
 
 - [ ] **Step 2: Do the editor work**
 
-Follow the document exactly.
+Follow [the handoff](2026-08-11-m2-editor-handoff.md) steps 1–3.
 
 - [ ] **Step 3: Verify**
 
-Run the verification section of the document.
-Expected: all three behaviours as written.
+Handoff step 4 — the ten-row PIE table. Row 9 (regen resuming without re-entering the volume) is the
+one that proves the ongoing-tag-requirement design rather than merely exercising it.
 
 - [ ] **Step 4: Commit**
 
 ```powershell
-git add docs/issues/2026-08-11-m2-hud-handoff.md Content/UI/Widgets/WBP_HUD.uasset
+git add docs/superpowers/plans/2026-08-11-m2-editor-handoff.md Content/UI/Widgets/WBP_HUD.uasset Content/Maps/WorldNull.umap Content/World/BP_Grove.uasset
 git commit -m "[UI][+] show mana flow and exhaustion on the hud"
 ```
 

@@ -106,8 +106,14 @@ you have to drop back to Forest to recover, which is the pressure the whole mile
 This is expressed as an ongoing tag requirement blocking on `Arcane.Vision` rather than by removing and
 reapplying the effect, so the player never has to leave and re-enter the volume to resume regenerating.
 `UGameplayEffect::OngoingTagRequirements` is deprecated in 5.8 (`GameplayEffect.h:2360`), so it goes
-through `UTargetTagRequirementsGameplayEffectComponent`, added in the constructor via
-`FindOrAddComponent<T>()`.
+through `UTargetTagRequirementsGameplayEffectComponent`, created in the constructor with
+`CreateDefaultSubobject` and added to `GEComponents`.
+
+> **Corrected 2026-08-11, during implementation.** This originally said `FindOrAddComponent<T>()`. That
+> helper calls `NewObject` with `NAME_None`, which is fatal inside a `UObject` constructor — it crashed the
+> editor on startup. The engine's own native-GE pattern is `CreateDefaultSubobject`;
+> `UGameplayEffect::PostInitProperties` ensures on *"should be added to GEComponents during the constructor
+> or in PostInitProperties"* (`GameplayEffect.cpp:236`).
 
 ### Tags
 

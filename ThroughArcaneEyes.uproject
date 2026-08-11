@@ -31,9 +31,13 @@
 			"Name": "GameplayAbilities",
 			"Enabled": true
 		},
-		{ 
-			"Name": "GameplayCameras", 
-			"Enabled": true 
+		{
+			"Name": "GameplayCameras",
+			"Enabled": true
+		},
+		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true
 		}
 	]
 }
