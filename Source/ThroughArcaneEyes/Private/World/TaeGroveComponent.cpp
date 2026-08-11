@@ -1,0 +1,118 @@
+// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
+
+#include "World/TaeGroveComponent.h"
+#include "GAS/TaeGASTypes.h"
+#include "GAS/TaeManaEffects.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
+#include "Curves/CurveFloat.h"
+#include "ThroughArcaneEyes.h"
+
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
+
+namespace
+{
+	// Unreal units are centimetres; curves are authored in metres
+	constexpr float UuPerMetre = 100.f;
+}
+
+UTaeGroveComponent::UTaeGroveComponent()
+{
+	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SetCollisionResponseToAllChannels(ECR_Overlap);
+	SetGenerateOverlapEvents(true);
+	RegenEffectClass = UTaeManaRegenEffect::StaticClass();
+}
+
+float UTaeGroveComponent::GetFootprintAreaSqM() const
+{
+	// Scaled extent is a half-size, so the full footprint is twice each axis
+	const FVector Extent = GetScaledBoxExtent();
+	const float WidthM = (Extent.X * 2.f) / UuPerMetre;
+	const float DepthM = (Extent.Y * 2.f) / UuPerMetre;
+	return FMath::Max(WidthM * DepthM, 0.f);
+}
+
+float UTaeGroveComponent::RegenRateForArea(const float AreaSqM, const UCurveFloat* Curve)
+{
+	if (!Curve)
+	{
+		return 0.f;
+	}
+
+	return FMath::Max(Curve->GetFloatValue(AreaSqM), 0.f);
+}
+
+float UTaeGroveComponent::GetRegenPerSecond() const
+{
+	return RegenRateForArea(GetFootprintAreaSqM(), RegenCurve);
+}
+
+void UTaeGroveComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OnComponentBeginOverlap.AddDynamic(this, &UTaeGroveComponent::HandleBeginOverlap);
+	OnComponentEndOverlap.AddDynamic(this, &UTaeGroveComponent::HandleEndOverlap);
+}
+
+void UTaeGroveComponent::HandleBeginOverlap(UPrimitiveComponent*, AActor* OtherActor,
+	UPrimitiveComponent*, int32, bool, const FHitResult&)
+{
+	const IAbilitySystemInterface* AsInterface = Cast<IAbilitySystemInterface>(OtherActor);
+	if (!AsInterface || ActiveRegen.Contains(OtherActor))
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = AsInterface->GetAbilitySystemComponent();
+	if (!ASC || !RegenEffectClass)
+	{
+		return;
+	}
+
+	const FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+	const FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RegenEffectClass, 1.f, Context);
+	if (!Spec.IsValid())
+	{
+		return;
+	}
+
+	// Positive — this restores. Per-period, not per-second.
+	Spec.Data->SetSetByCallerMagnitude(
+		TAG_Data_ManaRate, UTaeManaEffectBase::MagnitudePerPeriod(GetRegenPerSecond()));
+	ActiveRegen.Add(OtherActor, ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data));
+}
+
+void UTaeGroveComponent::HandleEndOverlap(UPrimitiveComponent*, AActor* OtherActor, UPrimitiveComponent*, int32)
+{
+	FActiveGameplayEffectHandle Handle;
+	if (!ActiveRegen.RemoveAndCopyValue(OtherActor, Handle) || !Handle.IsValid())
+	{
+		return;
+	}
+
+	const IAbilitySystemInterface* AsInterface = Cast<IAbilitySystemInterface>(OtherActor);
+	if (UAbilitySystemComponent* ASC = AsInterface ? AsInterface->GetAbilitySystemComponent() : nullptr)
+	{
+		ASC->RemoveActiveGameplayEffect(Handle);
+	}
+}
+
+#if WITH_EDITOR
+EDataValidationResult UTaeGroveComponent::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	if (!RegenCurve)
+	{
+		Context.AddError(NSLOCTEXT("TaeValidation", "NoRegenCurve",
+			"TaeGroveComponent: RegenCurve is not assigned — this grove grants no mana."));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	return Result;
+}
+#endif
