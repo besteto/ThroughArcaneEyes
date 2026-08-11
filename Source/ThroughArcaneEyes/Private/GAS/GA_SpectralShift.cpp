@@ -2,6 +2,7 @@
 
 #include "GAS/GA_SpectralShift.h"
 #include "GAS/TaeGASTypes.h"
+#include "GAS/TaeManaEffects.h"
 #include "Core/TaeArcaneSubsystem.h"
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -10,6 +11,7 @@
 UGA_SpectralShift::UGA_SpectralShift()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+	DrainEffectClass = UTaeManaDrainEffect::StaticClass();
 }
 
 void UGA_SpectralShift::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -37,6 +39,20 @@ void UGA_SpectralShift::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	{
 		Visual->SetArcaneActive(true);
 	}
+
+	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
+	if (ASC && DrainEffectClass)
+	{
+		const FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+		const FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(DrainEffectClass, 1.f, Context);
+		if (Spec.IsValid())
+		{
+			// Negative — this is a drain. Per-period, not per-second.
+			Spec.Data->SetSetByCallerMagnitude(
+				TAG_Data_ManaRate, UTaeManaEffectBase::MagnitudePerPeriod(-ArcaneDrainPerSecond));
+			DrainHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+		}
+	}
 }
 
 void UGA_SpectralShift::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -61,6 +77,15 @@ void UGA_SpectralShift::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 	if (UTaeArcaneSubsystem* Visual = GetWorld()->GetSubsystem<UTaeArcaneSubsystem>())
 	{
 		Visual->SetArcaneActive(false);
+	}
+
+	if (DrainHandle.IsValid())
+	{
+		if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())
+		{
+			ASC->RemoveActiveGameplayEffect(DrainHandle);
+		}
+		DrainHandle.Invalidate();
 	}
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);

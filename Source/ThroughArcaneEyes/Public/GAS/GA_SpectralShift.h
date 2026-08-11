@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GAS/TaeGameplayAbility.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "GA_SpectralShift.generated.h"
 
 class UInputMappingContext;
+class UGameplayEffect;
 
 UCLASS()
 class THROUGHARCANEEYES_API UGA_SpectralShift : public UTaeGameplayAbility
@@ -23,5 +25,16 @@ protected:
 	// Assign IMC_Arcane in BP_GA_SpectralShift
 	UPROPERTY(EditDefaultsOnly, Category = "Tae")
 	TObjectPtr<UInputMappingContext> ArcaneInputContext;
+
+	// Mana drained per second while Arcane Vision is active. Tune in BP_GA_SpectralShift.
+	UPROPERTY(EditDefaultsOnly, Category = "Tae", meta = (ClampMin = "0.0"))
+	float ArcaneDrainPerSecond = 4.f;
+
+	// Defaults to UTaeManaDrainEffect; overridable in BP_GA_SpectralShift
+	UPROPERTY(EditDefaultsOnly, Category = "Tae")
+	TSubclassOf<UGameplayEffect> DrainEffectClass;
+
+private:
+	FActiveGameplayEffectHandle DrainHandle;
 
 };
