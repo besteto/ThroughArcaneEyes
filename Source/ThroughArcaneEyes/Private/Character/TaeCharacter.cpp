@@ -34,6 +34,11 @@ void ATaeCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (ManaAttributeSet)
+	{
+		ManaAttributeSet->SetRecoveryFraction(ExhaustionRecoveryFraction);
+	}
+
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	if (SpectralShiftAbility)
 	{

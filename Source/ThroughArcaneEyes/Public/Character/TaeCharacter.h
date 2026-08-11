@@ -51,6 +51,11 @@ private:
 
 	FGameplayAbilitySpecHandle GrowRootHandle;
 
+	// Fraction of MaxMana required to leave exhaustion and re-enter Arcane Vision.
+	// Tune in BP_TaeCharacter Class Defaults.
+	UPROPERTY(EditDefaultsOnly, Category = "GAS", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float ExhaustionRecoveryFraction = 0.25f;
+
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 

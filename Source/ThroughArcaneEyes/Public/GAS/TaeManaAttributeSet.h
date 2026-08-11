@@ -23,6 +23,12 @@ public:
 	// together and cannot drift apart. Returns the new exhausted state.
 	static bool EvaluateExhaustion(float Mana, float MaxManaValue, float RecoveryFraction, bool bWasExhausted);
 
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
+
+	// Set from ATaeCharacter::BeginPlay — attribute sets are not editable in the Blueprint details panel,
+	// so the character owns the editable value.
+	void SetRecoveryFraction(float NewFraction) { RecoveryFraction = NewFraction; }
+
 	UPROPERTY(BlueprintReadOnly, Category = "Tae|Mana")
 	FGameplayAttributeData Mana;
 	ATTRIBUTE_ACCESSORS(UTaeManaAttributeSet, Mana)
@@ -30,4 +36,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Tae|Mana")
 	FGameplayAttributeData MaxMana;
 	ATTRIBUTE_ACCESSORS(UTaeManaAttributeSet, MaxMana)
+
+private:
+	// Fraction of MaxMana that must be reached before Arcane Vision is available again
+	float RecoveryFraction = 0.25f;
 };
