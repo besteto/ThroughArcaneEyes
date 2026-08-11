@@ -35,6 +35,9 @@ protected:
 	TSubclassOf<UGameplayEffect> DrainEffectClass;
 
 private:
+	void OnExhaustionChanged(const FGameplayTag Tag, int32 NewCount);
+
 	FActiveGameplayEffectHandle DrainHandle;
+	FDelegateHandle ExhaustionHandle;
 
 };

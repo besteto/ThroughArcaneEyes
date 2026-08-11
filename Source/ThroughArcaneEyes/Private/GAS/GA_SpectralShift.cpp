@@ -12,6 +12,10 @@ UGA_SpectralShift::UGA_SpectralShift()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	DrainEffectClass = UTaeManaDrainEffect::StaticClass();
+
+	// Blocks activation. Cancelling a running ability needs the listener below — blocked tags do not
+	// interrupt an ability that is already active.
+	ActivationBlockedTags.AddTag(TAG_Arcane_Exhausted);
 }
 
 void UGA_SpectralShift::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -53,6 +57,12 @@ void UGA_SpectralShift::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 			DrainHandle = ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 		}
 	}
+
+	if (ASC)
+	{
+		ExhaustionHandle = ASC->RegisterGameplayTagEvent(TAG_Arcane_Exhausted, EGameplayTagEventType::NewOrRemoved)
+			.AddUObject(this, &UGA_SpectralShift::OnExhaustionChanged);
+	}
 }
 
 void UGA_SpectralShift::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -88,5 +98,24 @@ void UGA_SpectralShift::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 		DrainHandle.Invalidate();
 	}
 
+	if (ExhaustionHandle.IsValid())
+	{
+		if (UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get())
+		{
+			ASC->RegisterGameplayTagEvent(TAG_Arcane_Exhausted, EGameplayTagEventType::NewOrRemoved).Remove(ExhaustionHandle);
+		}
+		ExhaustionHandle.Reset();
+	}
+
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UGA_SpectralShift::OnExhaustionChanged(const FGameplayTag Tag, const int32 NewCount)
+{
+	// Running dry ejects the player to Forest. UGA_GrowRoot cancels itself off the resulting
+	// Arcane.Vision loss, so the channel needs no exhaustion logic of its own.
+	if (NewCount > 0)
+	{
+		CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
+	}
 }
