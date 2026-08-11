@@ -30,6 +30,9 @@ Plugins/VisualStudioTools/
 # Generated
 *.generated.h
 
+# Agent scratch — SDD ledgers, task briefs, review packages
+.superpowers/
+
 # OS
 Thumbs.db
 Desktop.ini
