@@ -18,6 +18,11 @@ public:
 	virtual void Init() override;
 	virtual void Shutdown() override;
 
+	// Identifier WBP_HUD uses to fetch the HUD viewmodel out of the global collection. Must match the
+	// "Global Viewmodel Identifier" set in the widget's Viewmodels panel, or the widget silently falls
+	// back to creating its own instance that nothing writes to.
+	static const FName HudViewModelContextName;
+
 	UFUNCTION(BlueprintCallable)
 	UTaeHudViewModel* GetHudViewModel() const { return HudViewModel; }
 
