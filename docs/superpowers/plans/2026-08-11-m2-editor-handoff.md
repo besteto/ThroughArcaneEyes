@@ -128,7 +128,11 @@ being removed and reapplied. If regen only resumes after stepping out and back i
 
 ---
 
-## Step 5 — Tune (Task 12)
+## Step 5 — Tune (Task 12) -- DEFERRED
+
+**DEFERRED (2026-08-15)** — starting values kept as-is. Balance tuning happens after the visual pass, since how the economy reads depends on what the grove and the roots actually look like. Spec §5 already frames these as values "expected to move during in-editor tuning before any content is built on them", so nothing is blocked by leaving them.
+
+An earlier revision of this step claimed the spec required that "one full connection cannot be grown in a single charge from full". **It does not** — that phrase appears nowhere in the spec, and the target was invented here. Recorded so it does not get re-derived as a constraint.
 
 Editor-only, no code. Play the gate scenario end to end first, then adjust:
 
@@ -140,21 +144,23 @@ Editor-only, no code. Play the gate scenario end to end first, then adjust:
 | `ExhaustionRecoveryFraction` | `BP_TaeCharacter` | `0.25` |
 | Curve keys | `Curve_GroveRegen` | `50 → 4`, `200 → 10` |
 
-Targets from the spec: surveying an island pair costs a noticeable fraction of the bar, **one full
-connection cannot be grown in a single charge from full**, and a recovery visit takes a few seconds
-rather than a wait.
-
-With the defaults, a full connection costs ~2.9 s × 16/s ≈ **46 mana** — under half a bar, so it *can*
-be done in one charge. Expect to raise `ManaCostPerSecond` or lower `GrowthRate`.
+The arithmetic, for whenever tuning happens: a full path takes `1 / GrowthRate` seconds and costs `ArcaneDrainPerSecond + ManaCostPerSecond` per second. The current `0.35` / `12` gives 2.9 s × 16/s ≈ **46 mana** against a 100 bar, so a connection fits comfortably in one charge. If the loop should instead force a grove visit mid-connection, the total needs to exceed 100 — e.g. `GrowthRate 0.20` with `ManaCostPerSecond 22` gives 5.0 s × 26/s = 130, which is one recovery trip. Whether that is the desired feel is a design call, not a spec requirement.
 
 Record what the numbers land on in spec §5 under "Tuned values (M2 gate)".
 
 ---
 
-## Step 6 — The gate clip
+## Step 6 — The gate clip -- DEFERRED
 
-One continuous take: reveal → channel → run dry → ejected with the vignette flash → re-entry refused →
-walk to the grove → recover → return → finish the connection.
+**DEFERRED (2026-08-15)** to after the visual pass. Nothing in `WorldNull` is presentable yet: the character is still the Stickman placeholder, there are no rock or ruin meshes, and the grove is an invisible `UBoxComponent`. A clip recorded now would document the placeholder art rather than the mechanic.
+
+**This does not leave the §4 cascade unverified.** The clip carries two jobs — prove the cascade works end to end, and produce something showable. The first is done: the full ten-row table in step 4 was played through on 2026-08-15, including every beat the clip would capture (run dry → flash → Arcane drops on its own → partial growth kept → re-entry refused → grove recovery → finish the connection). Only the recording is outstanding. Spec §8 leans on the clip for cascade coverage; treat step 4's result as satisfying that, and the clip as a portfolio artifact owed later.
+
+**Staging note for when it is recorded:** with the current `0.35` / `12` defaults a connection costs ~46 against a 100 bar, so running dry mid-channel will not happen by accident. Survey for ~10 s first to burn the bar down, or tune per step 5, otherwise the connection simply completes and the exhaustion beat never fires.
+
+**Grove visual (carried into the visual pass):** the grove should read as a *magically bloomed place* — the one patch of living land in a ruined world. Needs VFX plus something under the box; handoff step 1 suggests a plane scaled `(14, 14, 1)` sized to the `(700, 700)` extent as the floor for it. Until it is visible, the recovery beat has nothing on screen.
+
+One continuous take, when the time comes: reveal → channel → run dry → ejected with the vignette flash → re-entry refused → walk to the grove → recover → return → finish the connection.
 
 ---
 
