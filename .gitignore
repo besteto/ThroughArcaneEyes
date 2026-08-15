@@ -33,6 +33,10 @@ Plugins/VisualStudioTools/
 # Agent scratch — SDD ledgers, task briefs, review packages
 .superpowers/
 
+# Working notes between me and the agent — bug artifacts, handoff reports, screenshots.
+# Local only; anything worth keeping is promoted into docs/superpowers/ or the spec.
+/docs/issues/
+
 # OS
 Thumbs.db
 Desktop.ini

@@ -1,5 +1,13 @@
 # M2 — Mana Has Teeth — Implementation Plan
 
+> **Status 2026-08-11 — Tasks 1–10 are complete and committed** (`43ce948..59be985` on
+> `feature/m2-mana-economy`). Their step checkboxes below were never ticked; the commit log is the
+> record. All C++ ships, all four new automation tests pass, and every editor asset exists.
+>
+> **Remaining: Task 11 (the editor pass) and Task 12 (tuning, docs, gate clip).** Both need a human at
+> the editor — start from [2026-08-11-m2-editor-handoff.md](2026-08-11-m2-editor-handoff.md), which
+> supersedes the step text under Tasks 11 and 12 and folds in the level placement Task 10 could not do.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make Arcane Vision cost something — it drains mana while active, growing drains faster, running dry ejects the player to Forest and locks re-entry until they recover, and recovery happens only while standing on living land.

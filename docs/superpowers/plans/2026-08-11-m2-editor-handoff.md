@@ -23,7 +23,7 @@ fighting; the HUD work below needs the editor anyway.
 
 ---
 
-## Step 1 — Place the grove in `WorldNull`
+## Step 1 — Place the grove in `WorldNull` -- DONE
 
 1. Open `Content/Maps/WorldNull`.
 2. Drag `Content/World/BP_Grove` into the level.
@@ -42,7 +42,7 @@ fighting; the HUD work below needs the editor anyway.
 
 ---
 
-## Step 2 — Verify the cues registered
+## Step 2 — Verify the cues registered -- DONE
 
 This is the step that catches the one M2 failure mode static analysis can't. Cue notifies are found by
 an **asset-registry scan of asset names**, so a rename silently unregisters a cue.
@@ -50,21 +50,31 @@ an **asset-registry scan of asset names**, so a rename silently unregisters a cu
 In the editor console (or PIE console):
 
 ```
-GameplayCue.PrintLoadedGameplayCueNotifyClasses
+GameplayCue.PrintGameplayCueNotifyMap
 ```
 
-**Expect:** all three `GC_*` classes listed. If one is missing, its name no longer derives its tag —
-compare against spec §6:
+**Expect** one line per tag, all three mapped to an index:
 
-| Asset | Derived tag |
-|---|---|
-| `GC_Mana_Drain` | `GameplayCue.Mana.Drain` |
-| `GC_Mana_Regen` | `GameplayCue.Mana.Regen` |
-| `GC_Arcane_Exhausted` | `GameplayCue.Arcane.Exhausted` |
+| Asset | Derived tag | Expected line |
+|---|---|---|
+| `GC_Mana_Drain` | `GameplayCue.Mana.Drain` | `GameplayCue.Mana.Drain -> <index>` |
+| `GC_Mana_Regen` | `GameplayCue.Mana.Regen` | `GameplayCue.Mana.Regen -> <index>` |
+| `GC_Arcane_Exhausted` | `GameplayCue.Arcane.Exhausted` | `GameplayCue.Arcane.Exhausted -> <index>` |
 
+`-> unmapped` or `-> index not found` means the asset name no longer derives its tag — compare against spec §6. Output is `LogAbilitySystem: Warning`, so read it in the Output Log.
+
+**Do not use `GameplayCue.PrintLoadedGameplayCueNotifyClasses` for this.** It prints `LoadedGameplayCueNotifyClasses` (`GameplayCueManager.cpp:1264-1268`), which is only appended as notifies are *async-loaded* (`:1069`) — on a fresh editor it is empty whether or not registration succeeded, so an empty list proves nothing. `PrintGameplayCueNotifyMap` reads the runtime cue set built by the registry scan, which is the thing being verified.
+
+If a tag does come back unmapped, **Window → Gameplay Cue Editor** shows the tag ↔ handler table directly and will say which asset (if any) claimed the tag.
+
+RESULT (2026-08-15): **PASS.** All three registered — `Mana.Regen -> 0`, `Mana.Drain -> 1`, `Arcane.Exhausted -> 2`.
+
+Two harmless `unmapped` lines accompany them: `GameplayCue.Mana` and `GameplayCue.Arcane` are the implicit parent tags of the hierarchy and no notify is meant to handle them. A third, `GameplayCue.Test`, belongs to the engine — it is declared by GAS's own unit tests (`GameplayEffectTests.cpp:32`) and is not ours.
+
+An earlier attempt with the `PrintLoaded…` variant returned only the `No GameplayCueNotifyPaths were specified … Falling back to using all of /Game/` fallback warning and was mistaken for a failure. That warning is unrelated to registration; it only reports that the scan root defaulted to `/Game/`, which is where `Content/GAS/Cues/` lives.
 ---
 
-## Step 3 — The HUD mana bar
+## Step 3 — The HUD mana bar -- DONE
 
 Open `Content/UI/Widgets/WBP_HUD`. The ViewModel is already registered there (the existing mana text
 binds to it), so this is bindings only — **no converters**, every bound property is already in its
@@ -80,7 +90,15 @@ presentation form.
 
 ---
 
-## Step 4 — Verify in PIE
+## Step 4 — Verify in PIE -- DONE
+
+RESULT (2026-08-15): **PASS**, all ten rows, on the first run where the HUD was actually connected. Row 9 confirmed specifically: entering Arcane inside the grove stops the climb, and dropping back to Forest resumes it *without* leaving and re-entering the volume — so the `UTargetTagRequirementsGameplayEffectComponent` on `UTaeManaRegenEffect` is inhibiting rather than being removed and reapplied, which is the whole reason it is built that way.
+
+Three defects had to be fixed before this step could run at all, none of them in M2's gameplay code:
+
+1. `GameInstanceClass` in `Config/DefaultEngine.ini` pointed at `/Game/Blueprints/Core/BP_TaeGameInstance`, but the asset lives at `/Game/Core/BP_TaeGameInstance`. The class silently failed to load and the engine fell back to base `UGameInstance`, so `UTaeGameInstance::Init` never ran, `ATaePlayerController::SetPawn` bailed at its `GetGameInstance<UTaeGameInstance>()` null check, and no attribute ever reached the ViewModel. This predates M2 — M1's mana text never worked either, and nobody noticed because M1 was never PIE-verified.
+2. `WBP_HUD` resolved its own viewmodel instance instead of the one the controller writes to. Now published to the global collection by `UTaeGameInstance::Init` under the identifier `HudViewModelContextName` (`"HudViewModel"`), and fetched by the widget via Creation Type `Global View Model Collection`. The old `Event Construct → Cast → SET` chain in the widget graph is gone.
+3. The View Bindings rows were authored with source and destination swapped. In the binding row the **left** field is the destination and the **right** is the source (`SMVVMBindingRow.cpp:122` vs `:169`), so the ViewModel belongs on the right.
 
 `showdebug abilitysystem` is the better instrument here than the HUD — it shows `Mana`, owned tags
 (`Arcane.Vision`, `Arcane.Exhausted`), and active abilities together, so a drain that isn't happening
@@ -142,5 +160,4 @@ walk to the grove → recover → return → finish the connection.
 
 ## Report back
 
-Anything that misbehaves goes in `docs/issues/2026-08-11-m2-editor-REPORT.md`, same as the M1 pass —
-observation first, diagnosis second.
+Scratch notes and bug artifacts go in `docs/issues/`, which is **gitignored** — it is a working area, not part of the record. Anything that turns out to matter gets promoted into this handoff, the plan, or the spec, where it is versioned. Observation first, diagnosis second.
