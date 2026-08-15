@@ -6,6 +6,8 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "Curves/CurveFloat.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "ThroughArcaneEyes.h"
 
 #if WITH_EDITOR
@@ -56,6 +58,31 @@ void UTaeGroveComponent::BeginPlay()
 
 	OnComponentBeginOverlap.AddDynamic(this, &UTaeGroveComponent::HandleBeginOverlap);
 	OnComponentEndOverlap.AddDynamic(this, &UTaeGroveComponent::HandleEndOverlap);
+
+	if (BloomSystem)
+	{
+		// SpawnSystemAttached is UnsafeDuringActorConstruction, so this cannot move to the constructor
+		BloomComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			BloomSystem, this, NAME_None, FVector::ZeroVector, FRotator::ZeroRotator,
+			EAttachLocation::KeepRelativeOffset, /*bAutoDestroy=*/false, /*bAutoActivate=*/true);
+	}
+
+	if (BloomComponent)
+	{
+		// The system sizes and scales itself to the grove it is actually on, so resizing the box in
+		// BP_Grove needs no second authored value
+		BloomComponent->SetVariableVec3(TaeGroveParams::Extent, GetScaledBoxExtent());
+		BloomComponent->SetVariableFloat(TaeGroveParams::RegenPerSecond, GetRegenPerSecond());
+		BloomComponent->SetVariableBool(TaeGroveParams::IsOccupied, false);
+	}
+}
+
+void UTaeGroveComponent::RefreshOccupancy()
+{
+	if (BloomComponent)
+	{
+		BloomComponent->SetVariableBool(TaeGroveParams::IsOccupied, ActiveRegen.Num() > 0);
+	}
 }
 
 void UTaeGroveComponent::HandleBeginOverlap(UPrimitiveComponent*, AActor* OtherActor,
@@ -84,6 +111,7 @@ void UTaeGroveComponent::HandleBeginOverlap(UPrimitiveComponent*, AActor* OtherA
 	Spec.Data->SetSetByCallerMagnitude(
 		TAG_Data_ManaRate, UTaeManaEffectBase::MagnitudePerPeriod(GetRegenPerSecond()));
 	ActiveRegen.Add(OtherActor, ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data));
+	RefreshOccupancy();
 }
 
 void UTaeGroveComponent::HandleEndOverlap(UPrimitiveComponent*, AActor* OtherActor, UPrimitiveComponent*, int32)
@@ -99,6 +127,7 @@ void UTaeGroveComponent::HandleEndOverlap(UPrimitiveComponent*, AActor* OtherAct
 	{
 		ASC->RemoveActiveGameplayEffect(Handle);
 	}
+	RefreshOccupancy();
 }
 
 #if WITH_EDITOR
@@ -111,6 +140,12 @@ EDataValidationResult UTaeGroveComponent::IsDataValid(FDataValidationContext& Co
 		Context.AddError(NSLOCTEXT("TaeValidation", "NoRegenCurve",
 			"TaeGroveComponent: RegenCurve is not assigned — this grove grants no mana."));
 		Result = EDataValidationResult::Invalid;
+	}
+
+	if (!BloomSystem)
+	{
+		Context.AddWarning(NSLOCTEXT("TaeValidation", "NoBloomSystem",
+			"TaeGroveComponent: BloomSystem is not assigned — this grove is invisible."));
 	}
 
 	return Result;

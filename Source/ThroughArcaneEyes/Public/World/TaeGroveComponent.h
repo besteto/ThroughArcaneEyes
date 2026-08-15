@@ -11,6 +11,17 @@ class UCurveFloat;
 class UGameplayEffect;
 // Actor headers pick this up transitively; a component header may not
 class FDataValidationContext;
+class UNiagaraComponent;
+class UNiagaraSystem;
+
+// User parameter names on NS_GroveBloom. SetVariableFloat and friends fail silently on an unknown
+// name, so these constants are the single spelling both C++ and the Niagara asset match against.
+namespace TaeGroveParams
+{
+	inline const FName Extent(TEXT("Extent"));
+	inline const FName RegenPerSecond(TEXT("RegenPerSecond"));
+	inline const FName IsOccupied(TEXT("IsOccupied"));
+}
 
 // A patch of living land. Standing inside it regenerates mana at a rate derived from its own footprint,
 // so a larger restoration pays more. Regen is inhibited while Arcane Vision is active.
@@ -52,6 +63,9 @@ private:
 	void HandleEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	// Pushes ActiveRegen occupancy to the bloom system. Called from both overlap handlers.
+	void RefreshOccupancy();
+
 	// Mana per second by footprint area in m². Assign Curve_GroveRegen in BP_Grove.
 	UPROPERTY(EditAnywhere, Category = "Tae|Grove")
 	TObjectPtr<UCurveFloat> RegenCurve;
@@ -59,6 +73,13 @@ private:
 	// Defaults to UTaeManaRegenEffect; overridable in BP_Grove
 	UPROPERTY(EditDefaultsOnly, Category = "Tae|Grove")
 	TSubclassOf<UGameplayEffect> RegenEffectClass;
+
+	// Bloom VFX for this patch of living land. Assign NS_GroveBloom in BP_Grove.
+	UPROPERTY(EditAnywhere, Category = "Tae|Grove")
+	TObjectPtr<UNiagaraSystem> BloomSystem;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UNiagaraComponent> BloomComponent;
 
 	// One entry per occupant, so overlapping pawns cannot remove each other's regen
 	TMap<TWeakObjectPtr<AActor>, FActiveGameplayEffectHandle> ActiveRegen;
