@@ -17,6 +17,9 @@ public class ThroughArcaneEyes : ModuleRules
 		// UI
 		PublicDependencyModuleNames.AddRange(new string[] { "UMG", "CommonUI", "ModelViewViewModel" });
 
+		// VFX
+		PublicDependencyModuleNames.AddRange(new string[] { "Niagara" });
+
 		// GAS
 		PublicDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "GameplayTags", "GameplayTasks" });
 		
