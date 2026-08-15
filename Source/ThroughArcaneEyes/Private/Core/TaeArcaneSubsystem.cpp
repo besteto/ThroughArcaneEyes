@@ -41,9 +41,9 @@ void UTaeArcaneSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 	// GI is guaranteed non-null here — the early return above already handled the missing-instance case.
 	const int32 Written = ApplyPaletteToCollection(&InWorld, GI->GetArcanePalette(), GI->GetArcaneCollection());
-	if (Written == 0)
+	if (Written < TaeArcaneParams::Num)
 	{
-		UE_LOG(LogTae, Warning, TEXT("[Arcane] No palette colours written — assign DA_ArcanePalette and MPC_Arcane in BP_TaeGameInstance"));
+		UE_LOG(LogTae, Warning, TEXT("[Arcane] %d of %d palette colours written — check DA_ArcanePalette and MPC_Arcane are assigned in BP_TaeGameInstance, and that MPC_Arcane declares every TaeArcaneParams name"), Written, TaeArcaneParams::Num);
 	}
 }
 

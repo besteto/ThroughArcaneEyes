@@ -66,6 +66,9 @@ private:
 	// Pushes ActiveRegen occupancy to the bloom system. Called from both overlap handlers.
 	void RefreshOccupancy();
 
+	// Whether anyone is currently standing in the grove
+	bool HasOccupants() const { return ActiveRegen.Num() > 0; }
+
 	// Mana per second by footprint area in m². Assign Curve_GroveRegen in BP_Grove.
 	UPROPERTY(EditAnywhere, Category = "Tae|Grove")
 	TObjectPtr<UCurveFloat> RegenCurve;

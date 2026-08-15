@@ -14,6 +14,10 @@ namespace TaeArcaneParams
 	inline const FName CubeTint(TEXT("CubeTint"));
 	inline const FName GroveBloom(TEXT("GroveBloom"));
 	inline const FName GrowthFront(TEXT("GrowthFront"));
+
+	// How many parameters ApplyPaletteToCollection writes. A lower count back from it means
+	// MPC_Arcane and these names have drifted apart.
+	inline constexpr int32 Num = 4;
 }
 
 // The arcane look in one place. Materials read these through MPC_Arcane, the Niagara systems sample

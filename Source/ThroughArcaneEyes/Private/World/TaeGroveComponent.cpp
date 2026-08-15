@@ -73,15 +73,16 @@ void UTaeGroveComponent::BeginPlay()
 		// BP_Grove needs no second authored value
 		BloomComponent->SetVariableVec3(TaeGroveParams::Extent, GetScaledBoxExtent());
 		BloomComponent->SetVariableFloat(TaeGroveParams::RegenPerSecond, GetRegenPerSecond());
-		BloomComponent->SetVariableBool(TaeGroveParams::IsOccupied, false);
 	}
+
+	RefreshOccupancy();
 }
 
 void UTaeGroveComponent::RefreshOccupancy()
 {
 	if (BloomComponent)
 	{
-		BloomComponent->SetVariableBool(TaeGroveParams::IsOccupied, ActiveRegen.Num() > 0);
+		BloomComponent->SetVariableBool(TaeGroveParams::IsOccupied, HasOccupants());
 	}
 }
 
@@ -117,7 +118,10 @@ void UTaeGroveComponent::HandleBeginOverlap(UPrimitiveComponent*, AActor* OtherA
 void UTaeGroveComponent::HandleEndOverlap(UPrimitiveComponent*, AActor* OtherActor, UPrimitiveComponent*, int32)
 {
 	FActiveGameplayEffectHandle Handle;
-	if (!ActiveRegen.RemoveAndCopyValue(OtherActor, Handle) || !Handle.IsValid())
+	const bool bRemoved = ActiveRegen.RemoveAndCopyValue(OtherActor, Handle);
+	RefreshOccupancy();
+
+	if (!bRemoved || !Handle.IsValid())
 	{
 		return;
 	}
@@ -127,7 +131,6 @@ void UTaeGroveComponent::HandleEndOverlap(UPrimitiveComponent*, AActor* OtherAct
 	{
 		ASC->RemoveActiveGameplayEffect(Handle);
 	}
-	RefreshOccupancy();
 }
 
 #if WITH_EDITOR

@@ -73,6 +73,9 @@ private:
 	// Applies GrowthAlpha and Arcane state to segment visibility/collision
 	void RefreshSegments();
 
+	// Moves the front component to the tip and pushes GrowthAlpha
+	void RefreshGrowthFront();
+
 	UPROPERTY(VisibleAnywhere, Category = "RootPath")
 	TObjectPtr<USplineComponent> Spline;
 
@@ -92,9 +95,6 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UNiagaraComponent> GrowthFrontComponent;
-
-	// Moves the front component to the tip and pushes GrowthAlpha
-	void RefreshGrowthFront();
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<USplineMeshComponent>> SplineMeshSegments;

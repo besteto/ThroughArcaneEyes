@@ -103,6 +103,11 @@ void ATaeRootPath::BeginPlay()
 			EAttachLocation::KeepRelativeOffset, /*bAutoDestroy=*/false, /*bAutoActivate=*/false);
 	}
 
+	if (GrowthFrontComponent)
+	{
+		GrowthFrontComponent->SetVariableBool(TaeRootParams::IsGrowing, false);
+	}
+
 	RefreshGrowthFront();
 }
 
@@ -215,6 +220,11 @@ EDataValidationResult ATaeRootPath::IsDataValid(FDataValidationContext& Context)
 	{
 		Context.AddError(FText::FromString(TEXT("PathMesh is not set — assign the root/vine mesh in BP_RootPath")));
 		Result = EDataValidationResult::Invalid;
+	}
+
+	if (!GrowthFrontSystem)
+	{
+		Context.AddWarning(FText::FromString(TEXT("GrowthFrontSystem is not set — this root path grows invisibly, assign NS_GrowthFront in BP_RootPath")));
 	}
 
 	return Result;
