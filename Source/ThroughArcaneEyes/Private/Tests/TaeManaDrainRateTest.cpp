@@ -5,9 +5,8 @@
 #include "GAS/TaeGASTypes.h"
 #include "GAS/TaeManaAttributeSet.h"
 #include "GAS/TaeManaEffects.h"
-#include "Engine/Engine.h"
-#include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Tests/TaeTestWorld.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -16,6 +15,9 @@
 // magnitude actually moves the attribute at the advertised per-second rate once GAS is ticking.
 namespace TaeDrainTest
 {
+	using Tae::Test::FScopedTestWorld;
+	using Tae::Test::TickWorld;
+
 	// One tick of slop at the 0.1s period is 0.4 mana. Tolerating that keeps the test stable across
 	// timer boundary jitter while still catching a rate that is wrong by any meaningful amount.
 	constexpr float Tolerance = 0.5f;
@@ -23,19 +25,6 @@ namespace TaeDrainTest
 	// A periodic effect's first execution lands a fixed offset after application, so rates are sampled
 	// across a window that starts once the effect is already ticking.
 	constexpr float SettleSeconds = 1.f;
-
-	// Mirrors the engine's own GAS tests (GameplayEffectTests.cpp:761): sub-tick in fixed steps so
-	// periodic effects land, and bump GFrameCounter because GAS caches per-frame state.
-	void TickWorld(UWorld* World, float Seconds)
-	{
-		constexpr float Step = 0.1f;
-		while (Seconds > 0.f)
-		{
-			World->Tick(ELevelTick::LEVELTICK_All, FMath::Min(Seconds, Step));
-			Seconds -= Step;
-			GFrameCounter++;
-		}
-	}
 
 	// A bare actor carrying an ASC and our attribute set — deliberately not ATaeCharacter, whose
 	// BeginPlay warns about unassigned Blueprint abilities and would dirty the test log.
@@ -69,34 +58,6 @@ namespace TaeDrainTest
 			TAG_Data_ManaRate, UTaeManaEffectBase::MagnitudePerPeriod(-RatePerSecond));
 		return ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 	}
-
-	// Scoped world matching the engine's setup/teardown so the test leaves no context behind.
-	struct FScopedTestWorld
-	{
-		FScopedTestWorld()
-		{
-			World = UWorld::CreateWorld(EWorldType::Game, false);
-			FWorldContext& WorldContext = GEngine->CreateNewWorldContext(EWorldType::Game);
-			WorldContext.SetCurrentWorld(World);
-
-			FURL URL;
-			World->InitializeActorsForPlay(URL);
-			World->BeginPlay();
-
-			InitialFrameCounter = GFrameCounter;
-		}
-
-		~FScopedTestWorld()
-		{
-			GFrameCounter = InitialFrameCounter;
-			World->EndPlay(EEndPlayReason::Quit);
-			GEngine->DestroyWorldContext(World);
-			World->DestroyWorld(false);
-		}
-
-		UWorld* World = nullptr;
-		uint64 InitialFrameCounter = 0;
-	};
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
