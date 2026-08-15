@@ -12,6 +12,16 @@ class USplineMeshComponent;
 class UTaeStateComponent;
 class UStaticMesh;
 class UMaterialInterface;
+class UNiagaraComponent;
+class UNiagaraSystem;
+
+// User parameter names on NS_GrowthFront. SetVariableFloat and friends fail silently on an unknown
+// name, so these constants are the single spelling both C++ and the Niagara asset match against.
+namespace TaeRootParams
+{
+	inline const FName GrowthAlpha(TEXT("GrowthAlpha"));
+	inline const FName IsGrowing(TEXT("IsGrowing"));
+}
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnConnectionStateChanged, ATaeRootPath*, Path, ETaeConnectionState, NewState);
 
@@ -34,6 +44,15 @@ public:
 
 	float GetGrowthAlpha() const { return GrowthAlpha; }
 	ETaeConnectionState GetConnectionState() const { return ConnectionState; }
+
+	// Distance along the spline where the growing tip sits. Alpha is clamped and a degenerate spline
+	// yields zero, so the front never runs off either end. Static and spline-free so it can be tested
+	// directly.
+	static float GrowthFrontDistance(float InGrowthAlpha, float SplineLength);
+
+	// Called by UGA_GrowRoot when a channel starts and ends. The ability already knows; making the
+	// path work it out would mean giving it a tick it does not otherwise need.
+	void SetGrowing(bool bNewGrowing);
 
 	UPROPERTY(BlueprintAssignable, Category = "RootPath")
 	FOnConnectionStateChanged OnConnectionStateChanged;
@@ -66,6 +85,16 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "RootPath")
 	TObjectPtr<UMaterialInterface> PathMaterial;
+
+	// VFX at the growing tip. Assign NS_GrowthFront in BP_RootPath.
+	UPROPERTY(EditAnywhere, Category = "RootPath")
+	TObjectPtr<UNiagaraSystem> GrowthFrontSystem;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UNiagaraComponent> GrowthFrontComponent;
+
+	// Moves the front component to the tip and pushes GrowthAlpha
+	void RefreshGrowthFront();
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<USplineMeshComponent>> SplineMeshSegments;

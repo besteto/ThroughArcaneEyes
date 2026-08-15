@@ -4,6 +4,8 @@
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "Components/TaeStateComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "World/TaeConnectionTypes.h"
 
 #if WITH_EDITOR
@@ -92,6 +94,16 @@ void ATaeRootPath::BeginPlay()
 	// Segments stay visible in the editor so the spline can be authored; they only hide once play starts,
 	// same as ATaeGridCube's bStartHidden handling.
 	RefreshSegments();
+
+	if (GrowthFrontSystem)
+	{
+		// SpawnSystemAttached is UnsafeDuringActorConstruction, so this cannot move to the constructor
+		GrowthFrontComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			GrowthFrontSystem, Spline, NAME_None, FVector::ZeroVector, FRotator::ZeroRotator,
+			EAttachLocation::KeepRelativeOffset, /*bAutoDestroy=*/false, /*bAutoActivate=*/false);
+	}
+
+	RefreshGrowthFront();
 }
 
 void ATaeRootPath::AdvanceGrowth(const float DeltaAlpha)
@@ -109,6 +121,7 @@ void ATaeRootPath::AdvanceGrowth(const float DeltaAlpha)
 	ConnectionState = NewState;
 
 	RefreshSegments();
+	RefreshGrowthFront();
 
 	if (bStateChanged)
 	{
@@ -151,6 +164,45 @@ void ATaeRootPath::RefreshSegments()
 		Segment->SetCollisionEnabled(bCollides
 			? ECollisionEnabled::QueryAndPhysics
 			: ECollisionEnabled::NoCollision);
+	}
+}
+
+float ATaeRootPath::GrowthFrontDistance(const float InGrowthAlpha, const float SplineLength)
+{
+	return FMath::Clamp(InGrowthAlpha, 0.f, 1.f) * FMath::Max(SplineLength, 0.f);
+}
+
+void ATaeRootPath::RefreshGrowthFront()
+{
+	if (!GrowthFrontComponent || !Spline)
+	{
+		return;
+	}
+
+	const float Distance = GrowthFrontDistance(GrowthAlpha, Spline->GetSplineLength());
+	GrowthFrontComponent->SetWorldLocation(
+		Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World));
+	GrowthFrontComponent->SetVariableFloat(TaeRootParams::GrowthAlpha, GrowthAlpha);
+}
+
+void ATaeRootPath::SetGrowing(const bool bNewGrowing)
+{
+	if (!GrowthFrontComponent)
+	{
+		return;
+	}
+
+	// A finished connection has no growing tip, whatever the ability thinks
+	const bool bActuallyGrowing = bNewGrowing && ConnectionState != ETaeConnectionState::Restored;
+
+	GrowthFrontComponent->SetVariableBool(TaeRootParams::IsGrowing, bActuallyGrowing);
+	if (bActuallyGrowing)
+	{
+		GrowthFrontComponent->Activate();
+	}
+	else
+	{
+		GrowthFrontComponent->Deactivate();
 	}
 }
 

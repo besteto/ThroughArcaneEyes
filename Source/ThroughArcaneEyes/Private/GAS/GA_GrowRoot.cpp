@@ -98,6 +98,8 @@ void UGA_GrowRoot::ActivateAbility(
 	World->GetTimerManager().SetTimer(
 		GrowthTimerHandle, this, &UGA_GrowRoot::TickGrowth, GrowthTickInterval, true);
 
+	ActivePath->SetGrowing(true);
+
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
 		if (DrainEffectClass)
@@ -154,6 +156,10 @@ void UGA_GrowRoot::EndAbility(
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(GrowthTimerHandle);
+	}
+	if (ActivePath)
+	{
+		ActivePath->SetGrowing(false);
 	}
 	ActivePath = nullptr;
 
