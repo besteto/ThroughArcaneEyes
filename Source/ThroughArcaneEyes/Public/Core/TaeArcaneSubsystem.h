@@ -9,6 +9,8 @@
 class APostProcessVolume;
 class UAudioComponent;
 class USoundBase;
+class UTaeArcanePalette;
+class UMaterialParameterCollection;
 
 UCLASS()
 class THROUGHARCANEEYES_API UTaeArcaneSubsystem : public UTickableWorldSubsystem
@@ -28,6 +30,12 @@ public:
 	// Pure interpolation step — moves Current toward Target so a full traverse takes Duration seconds.
 	// Duration <= 0 snaps. Static and world-free so it can be tested directly.
 	static float StepBlendAlpha(float Current, float Target, float DeltaTime, float Duration);
+
+	// Copies every palette colour into the collection. Returns how many parameters were written —
+	// SetVectorParameterValue returns false for a name the collection does not declare, so a count
+	// below the palette's size means the asset and TaeArcaneParams have drifted apart.
+	// Static and instance-free so it can be tested against a runtime-built collection.
+	static int32 ApplyPaletteToCollection(UWorld* World, const UTaeArcanePalette* Palette, UMaterialParameterCollection* Collection);
 
 	// UTickableWorldSubsystem
 	virtual void Tick(float DeltaTime) override;

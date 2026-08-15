@@ -1,10 +1,14 @@
 // Copyright © 2026 Helen Allien Poe. See LICENSE.
 
 #include "Core/TaeArcaneSubsystem.h"
+#include "Core/TaeArcanePalette.h"
 #include "Core/TaeGameInstance.h"
 #include "Engine/PostProcessVolume.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "Materials/MaterialParameterCollectionInstance.h"
+#include "ThroughArcaneEyes.h"
 
 void UTaeArcaneSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
@@ -34,6 +38,13 @@ void UTaeArcaneSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 			ArcaneMusicComp->SetVolumeMultiplier(0.f);
 		}
 	}
+
+	// GI is guaranteed non-null here — the early return above already handled the missing-instance case.
+	const int32 Written = ApplyPaletteToCollection(&InWorld, GI->GetArcanePalette(), GI->GetArcaneCollection());
+	if (Written == 0)
+	{
+		UE_LOG(LogTae, Warning, TEXT("[Arcane] No palette colours written — assign DA_ArcanePalette and MPC_Arcane in BP_TaeGameInstance"));
+	}
 }
 
 float UTaeArcaneSubsystem::StepBlendAlpha(const float Current, const float Target, const float DeltaTime, const float Duration)
@@ -45,6 +56,27 @@ float UTaeArcaneSubsystem::StepBlendAlpha(const float Current, const float Targe
 
 	// A speed of 1/Duration traverses the full 0..1 range in exactly Duration seconds.
 	return FMath::FInterpConstantTo(Current, Target, DeltaTime, 1.f / Duration);
+}
+
+int32 UTaeArcaneSubsystem::ApplyPaletteToCollection(UWorld* World, const UTaeArcanePalette* Palette, UMaterialParameterCollection* Collection)
+{
+	if (!World || !Palette || !Collection)
+	{
+		return 0;
+	}
+
+	UMaterialParameterCollectionInstance* Instance = World->GetParameterCollectionInstance(Collection);
+	if (!Instance)
+	{
+		return 0;
+	}
+
+	int32 Written = 0;
+	Written += Instance->SetVectorParameterValue(TaeArcaneParams::SpectralEdge, Palette->SpectralEdge) ? 1 : 0;
+	Written += Instance->SetVectorParameterValue(TaeArcaneParams::CubeTint, Palette->CubeTint) ? 1 : 0;
+	Written += Instance->SetVectorParameterValue(TaeArcaneParams::GroveBloom, Palette->GroveBloom) ? 1 : 0;
+	Written += Instance->SetVectorParameterValue(TaeArcaneParams::GrowthFront, Palette->GrowthFront) ? 1 : 0;
+	return Written;
 }
 
 void UTaeArcaneSubsystem::SetArcaneActive(const bool bActive)
