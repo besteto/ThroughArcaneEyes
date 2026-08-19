@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Helen Allien Poe. Source available - see LICENSE.
+# Copyright (c) 2026 Helen Allien Poe. See LICENSE.
 """Creates the arcane presentation assets: MPC_Arcane and DA_ArcanePalette.
 
 Run headless:

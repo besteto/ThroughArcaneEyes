@@ -1,4 +1,4 @@
-// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
+// Copyright © 2026 Helen Allien Poe. See LICENSE.
 
 #include "Misc/AutomationTest.h"
 #include "World/TaeRootPath.h"
