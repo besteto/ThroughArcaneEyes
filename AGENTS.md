@@ -153,7 +153,7 @@ Prefer `IsDataValid` (guarded by `#if WITH_EDITOR`) over runtime `UE_LOG` null-g
 
 All source files use:
 ```
-// Copyright © 2026 Helen Allien Poe. Source available — see LICENSE.
+// Copyright © 2026 Helen Allien Poe. See LICENSE.
 ```
 License: Source Available — code is public for portfolio/study only; no redistribution or commercial use. See `LICENSE` in the repo root.
 

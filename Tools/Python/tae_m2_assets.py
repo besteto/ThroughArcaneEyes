@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Helen Allien Poe. Source available - see LICENSE.
+# Copyright (c) 2026 Helen Allien Poe. See LICENSE.
 """Creates the M2 editor assets: the three cue Blueprints, the regen curve, and BP_Grove.
 
 Run headless:

@@ -1,4 +1,12 @@
 # Project: Through Arcane Eyes (UE 5.8)
+
+![Unreal Engine 5.8](https://img.shields.io/badge/Unreal%20Engine-5.8-0E1128?logo=unrealengine&logoColor=white)
+![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=cplusplus&logoColor=white)
+![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)
+![Tests: 11 automation](https://img.shields.io/badge/Tests-11%20automation-brightgreen)
+![Code: Apache 2.0](https://img.shields.io/badge/Code-Apache%202.0-D22128)
+![Content: All Rights Reserved](https://img.shields.io/badge/Content-All%20Rights%20Reserved-lightgrey)
+
 "Through Arcane Eyes" is a technical vertical slice developed in Unreal Engine 5.8. It serves as a portfolio demonstration of high-level C++ architecture, modern UI patterns (MVVM + Common UI), and advanced shader techniques.
 
 You play as **Ant** — a humanoid living tree, roots for legs and branches for arms — stranded in a ruined factory world of floating cube islands. The land is broken, rusted, and overgrown. By activating **Arcane Vision** (the Spectral Shift), Ant perceives what could exist: hidden geometry, dormant connections, paths yet to grow. The goal is to restore the land — crossing and linking the separated islands by growing roots, vines, and trees between them.
@@ -13,7 +21,7 @@ You play as **Ant** — a humanoid living tree, roots for legs and branches for 
 * Animation: Control Rig procedural tree motion — root drift, trunk bend, Arcane reach *(planned, M2)*
 * World Gen: Hand-authored islands with PCG-generated detail and scatter *(planned, M4)*
 * Testing: UE Automation Tests — pure game logic covered headlessly
-* Workflow: Git (GitHub Actions for CI/CD), Obsidian (Knowledge Management)
+* Workflow: Git, GitHub Actions for CI/CD *(planned)*, Obsidian (Knowledge Management)
 
 > **Note on Motion Matching:** `PoseSearch` was evaluated and deliberately dropped. It is data-hungry
 > and tuned for naturalistic humanoid locomotion — close to the opposite of what a walking tree needs.
@@ -115,7 +123,22 @@ Arcane Vision is the mechanical expression of Ant's nature — a living thing th
 * Play in Editor (PIE).
 
 # 📄 License
-Copyright © 2026 Helen Allien Poe. **Source Available** — see [LICENSE](LICENSE).
+Copyright © 2026 Helen Allien Poe.
+
+This project is **dual licensed**, because a game repository is two different things:
+
+| Part | Licence |
+|---|---|
+| Source code — `Source/`, `Tools/`, `Config/`, build files | [Apache License 2.0](LICENSE) |
+| Game content — everything in `Content/`, plus the name, art, story and world | [All Rights Reserved](LICENSE-CONTENT.md) |
+
+Read the code, learn from it, reuse it under Apache 2.0. The game itself is a commercial work and is not licensed for reuse.
+
+Third-party content is governed by its own terms — see [NOTICE](NOTICE).
+
+## Setup note
+
+The **Stickman** placeholder character is a free [Fab](https://www.fab.com/listings/d36ddd1b-8139-427d-8f8a-6a91469dc6b8) asset under the Fab Standard License, which permits sharing with collaborators through a private repository but not public redistribution. It is therefore **not tracked in this repository**. Download it from the listing into `Content/Character/Stickman/` before opening the project, or the character references will be unresolved.
 
 The source code is public for portfolio and educational viewing only.
 Redistribution, commercial use, or inclusion in other projects is not permitted.

@@ -1,0 +1,26 @@
+Through Arcane Eyes
+Copyright © 2026 Helen Allien Poe
+
+This product includes software developed by Helen Allien Poe, licensed under the
+Apache License, Version 2.0. See LICENSE.
+
+GAME CONTENT IS NOT COVERED BY THE APACHE LICENSE.
+
+Everything under Content/, together with the name "Through Arcane Eyes" and its
+artwork, audio, story, characters, and world design, is proprietary and All
+Rights Reserved. See LICENSE-CONTENT.md.
+
+--------------------------------------------------------------------------------
+Third-party content
+--------------------------------------------------------------------------------
+
+Stickman — character mesh, skeleton, animations, materials, textures
+  Source:  Fab
+           https://www.fab.com/listings/d36ddd1b-8139-427d-8f8a-6a91469dc6b8
+  Licence: Fab Standard License
+  Status:  NOT redistributed in this repository. The Fab Standard License permits
+           sharing Content with collaborators through a private repository, but
+           not public redistribution, and requires that end users be restricted
+           from extracting Content outside the Project. These files are therefore
+           untracked. Download them from the listing above into
+           Content/Character/Stickman/ to build the project.
