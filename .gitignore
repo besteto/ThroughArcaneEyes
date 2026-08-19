@@ -42,7 +42,8 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
-# Third-party: Stickman is a Fab asset under the Fab Standard License, which permits
-# sharing with collaborators via a private repository but not public redistribution.
-# Download it into this path per the README setup note.
+# Third-party: Stickman is a Fab asset by Atlant Games, licensed under the Fab
+# Standard License, which permits sharing with collaborators via a private
+# repository but not public redistribution. Download it into this path per the
+# README setup note.
 /Content/Character/Stickman/

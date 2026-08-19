@@ -138,7 +138,7 @@ Third-party content is governed by its own terms — see [NOTICE](NOTICE).
 
 ## Setup note
 
-The **Stickman** placeholder character is a free [Fab](https://www.fab.com/listings/d36ddd1b-8139-427d-8f8a-6a91469dc6b8) asset under the Fab Standard License, which permits sharing with collaborators through a private repository but not public redistribution. It is therefore **not tracked in this repository**. Download it from the listing into `Content/Character/Stickman/` before opening the project, or the character references will be unresolved.
+The **Stickman** placeholder character is a free [Fab](https://www.fab.com/listings/d36ddd1b-8139-427d-8f8a-6a91469dc6b8) asset by **Atlant Games**, under the Fab Standard License, which permits sharing with collaborators through a private repository but not public redistribution. It is therefore **not tracked in this repository**. Download it from the listing into `Content/Character/Stickman/` before opening the project, or the character references will be unresolved.
 
 The source code is public for portfolio and educational viewing only.
 Redistribution, commercial use, or inclusion in other projects is not permitted.
