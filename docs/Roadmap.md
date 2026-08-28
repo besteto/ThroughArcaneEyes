@@ -13,15 +13,23 @@
 | Day 4 | Data-Driven UI | MVVM Viewmodel + Common UI HUD + Grid DataTable | ✅ Done |
 | Day 5 | Portal & Polish | Render-to-Texture Portal + Win Condition UI | ✅ Done |
 
-### Sprint 2 — Enhancement
-*Optional. Adds depth and polish once the core slice is complete.*
+### Sprint 2 — Milestones
 
-| Day | Focus | Deliverable | Status |
-|-----|-------|-------------|--------|
-| Day 6 | Animation (Motion Matching) | Motion Matching locomotion + Arcane float + footsteps | 🔄 In progress |
-| Day 7 | Level Dressing & Clutter | Hand-placed island set dressing + `ATaeClutterScatter` random props | ⬜ Not started |
-| Day 8 | Interactables & Connections | Chest/pickup spawners + `ATaeWorldManager` hidden root-paths | ⬜ Not started |
-| Day 9 | Audio & SFX | UI sounds + portal/spectral SFX + ambient music | ⬜ Not started |
+> **Day-based planning was retired on 2026-08-10.** The labels stopped describing reality — Day 6's Motion Matching was dropped outright, Day 7/8 shipped as one connection loop, and Day 9 slid behind the visual pass. Sprint 2 is now gated on a recordable demo rather than a calendar. The authority is [the restoration economy spec](superpowers/specs/2026-08-11-restoration-economy-design.md); the mechanic detail lives in [the connection loop spec](superpowers/specs/2026-08-10-connection-loop-design.md).
+
+| Milestone | Focus | Status |
+|-----------|-------|--------|
+| M1 | Connection Loop Playable — `ATaeRootPath` growth, `UGA_GrowRoot`, `ArcaneBlendAlpha` | ✅ Done |
+| M2 | Mana Has Teeth — mana attribute, periodic GEs, exhaustion, grove regen | ✅ Done |
+| M3 | Arcane As A Sense — Slate connection overlay + sapling reveal | ⬜ Not started |
+| M4 | The World Heals — PCG restoration on connection complete | ⬜ Not started |
+| M5 | Progression & Polish — win state, save, audio, Control Rig | ⬜ Not started |
+
+**M1 gate:** reveal a broken root in Arcane Vision, channel it to half growth, release, return, finish it, then walk across it in normal mode.
+
+**M2 gate:** a ten-row PIE table covering drain, regen, exhaustion entry and recovery, and the grove — verified 2026-08-15. Its demo clip is deferred to the arcane presentation pass, because nothing in `WorldNull` was presentable enough to record.
+
+The day-by-day records below are kept as a build log of Sprint 1. **Days 6–9 are superseded** — see [what happened to them](#what-happened-to-days-69).
 
 ---
 
@@ -34,8 +42,8 @@
 - C++ framework classes — `ATaeCharacter`, `ATaePlayerController`, `ATaeGameMode` (`AGameMode`), `ATaeGameState`, `UTaeGameInstance`, `ATaeHud`
 - Enhanced Input — Move / Look / Jump / `DoSpectralShift` stub bound in controller; WASD Swizzle/Negate modifiers correct
 - `LogTae` project log category; null-guard warnings on all BP-assigned properties → migrated to `IsDataValid` on `ATaePlayerController`
-- Blueprint parenting — `BP_TaeGameMode`, `BP_Hero`, `BP_TaePlayerController`, `BP_TaeGameState`, `BP_TaeGameInstance`, `BP_TaeHud` created with correct parents; class refs set in `BP_TaeGameMode` Class Defaults
-- Input assets — `IMC_Default`, `IA_MoveInputAction`, `IA_LookInputAction`, `IA_JumpInputAction`, `IA_SpectralShift`
+- Blueprint parenting — `BP_TaeGameMode`, `BP_TaeCharacter`, `BP_TaePlayerController`, `BP_TaeGameState`, `BP_TaeGameInstance`, `BP_TaeHud` created with correct parents; class refs set in `BP_TaeGameMode` Class Defaults
+- Input assets — `IMC_Default`, `IA_Move`, `IA_Look`, `IA_Jump`, `IA_SpectralShift`
 - Config — `GlobalDefaultGameMode`, Enhanced Input component class, `GameInstanceClass` set
 - `UTaeMainMenuWidget` (`UCommonActivatableWidget`) + `WBP_MainMenu` placeholder — Start (DeactivateWidget) / Exit (QuitGame); shown via `ATaeHud::BeginPlay`; `CommonUI` added to `Build.cs`
 
@@ -55,11 +63,11 @@
 - `UGA_SpectralShift` → `UTaeGameplayAbility`; toggle via `TAG_Arcane_Vision`; `IMC_Arcane` push/pop in Activate/End
 - Native tag `TAG_Arcane_Vision` declared in `TaeGASTypes.h`, defined in `TaeGASTypes.cpp` — no `FName` strings in calling code
 - `ATaeCharacter` exposes `SpectralShiftHandle`; controller uses `TryActivateAbility` / `CancelAbilityHandle` — no class-based lookup
-- `SpectralShiftAbility` (`TSubclassOf`) on `ATaeCharacter` — assign `BP_GA_SpectralShift` in `BP_Hero` Class Defaults
+- `SpectralShiftAbility` (`TSubclassOf`) on `ATaeCharacter` — assign `BP_GA_SpectralShift` in `BP_TaeCharacter` Class Defaults
 
 ### Materials / Rendering
 - `M_SpectralEdge` — animated plasma overlay; DDX/DDY depth edge mask; `Floor(Time)` stepped animation
-- `BP_SpectralVolume` — Infinite Extent post-process volume; chromatic aberration; disabled by default; toggled by `BP_GA_SpectralShift`
+- Infinite Extent post-process volume — chromatic aberration; disabled by default. Placed directly in `WorldNull.umap` as a native `APostProcessVolume`; `UTaeArcaneSubsystem` finds it at `OnWorldBeginPlay`, so there is no Blueprint wrapper
 
 ---
 
@@ -80,9 +88,9 @@
 - `M_GridCube_Arcane` — Arcane vision state; Surface translucent with emissive glow
 
 ### Editor
-- `BP_GridCube` → parent `ATaeGridCube`; test cube mesh + materials assigned (rework planned with detailed materials)
-- `BP_GridManager` — placed in level
-- `BP_Hero` — tree skeletal mesh + animation assigned
+- `BP_TaeGridCube` → parent `ATaeGridCube`; test cube mesh + materials assigned (rework planned with detailed materials)
+- `BP_TaeGridManager` — placed in level
+- `BP_TaeCharacter` — tree skeletal mesh + animation assigned
 
 ---
 
@@ -103,8 +111,8 @@
 - `WBP_HUD` — View Bindings: `ManaText` → `TextBlock.Text`, `ArcaneVisibility` → widget visibility; Event Construct sets ViewModel from GameInstance
 - `BP_TaeHud` — `WBP_HUD` assigned to `HudWidgetClass`
 - `WBP_PauseMenu` — `UTaeActivatableWidget`; Escape via `IA_Pause` → `ATaeHud::TogglePauseMenu`
-- `WBP_VictoryScreen` — `UTaeActivatableWidget`; "To Main Screen" → `ATaeHud::ShowMainMenu`
-- `UTaeActivatableWidget` — base class; auto collapse/visible on deactivate/activate; `WBP_MainMenu`, `WBP_PauseMenu`, `WBP_VictoryScreen` all inherit
+- `WBP_WinScreen` — `UTaeActivatableWidget`; "To Main Screen" → `ATaeHud::ShowMainMenu`
+- `UTaeActivatableWidget` — base class; auto collapse/visible on deactivate/activate; `WBP_MainMenu`, `WBP_PauseMenu`, `WBP_WinScreen` all inherit
 
 
 ---
@@ -121,12 +129,10 @@
 - `UTaeGameInstance` — `Music_Forest`, `Music_Arcane` (EditDefaultsOnly), `MusicCrossfadeDuration`; `GA_SpectralShift` calls subsystem instead of holding direct PP reference
 
 ### Deferred
-- [ ] `ATaePortal` render-to-texture — `USceneCaptureComponent2D` + `UTextureRenderTarget2D`
-- [ ] `M_Portal` — samples `UTextureRenderTarget2D`; distortion/chromatic aberration pass
-- [ ] `M_GridCube_Forest` texture upgrade — replace Voronoi with tiling rust + moss textures + normal maps
+> Carried forward to [Still owed from Sprint 1](#still-owed-from-sprint-1).
 
 ### Audio
-> Asset import/wiring moved to Day 9 — see below. Music crossfade C++ logic is complete.
+> Asset import and wiring resequenced to M5 — see [what happened to Days 6–9](#what-happened-to-days-69). Music crossfade C++ logic is complete.
 - Music crossfade logic — `UAudioComponent` pair in `UTaeArcaneSubsystem`; spawned in `OnWorldBeginPlay`; crossfaded via `SetArcaneActive`
 
 ### Substrate Upgrade
@@ -140,73 +146,21 @@
 
 ---
 
-## Day 6 — Animation (Motion Matching)
+## What happened to Days 6–9
 
-**Goal:** Ant's movement feels heavy and rooted in normal mode, reaching and extending in Arcane mode. Motion Matching drives both states from separate pose databases.
+Each of the four planned days was resolved — dropped, delivered under a different name, or resequenced. None is still pending in its original form.
 
-> Depends on Day 2 (`GameplayTag.Arcane.Vision` used to blend between databases).
+| Original day | Outcome | Where it went |
+|---|---|---|
+| **Day 6** — Animation (Motion Matching) | ❌ **Dropped** | `PoseSearch` is data-hungry and tuned for naturalistic humanoid locomotion, which is close to the opposite of what a walking tree needs. Replaced by Control Rig procedural tree motion, resequenced to **M5**. The `UAF`/AnimNext stack was assessed at the same time and rejected — every module ships under `Engine/Plugins/Experimental/` in 5.8. |
+| **Day 7** — Level Dressing & Clutter | 🔀 **Partly delivered, partly resequenced** | `ATaeClutterScatter` and `ATaeInteractableSpawnPoint` exist in `World/`. Hand-placed set dressing is blocked on art — there are still no rock or ruin meshes in `Content/`. The wider approach is superseded by the spec's hybrid PCG islands in **M4**; design notes remain in [LevelGeneration.md](LevelGeneration.md), sourcing candidates in [VisualAssets.md](VisualAssets.md). |
+| **Day 8** — Interactables & Connections | ✅ **Delivered as M1** | The root-connection mechanic shipped whole: `ATaeRootPath`, `ATaeRootAnchor`, `ATaeWorldManager`, `ETaeConnectionState`, and `UGA_GrowRoot`. It grew past a day's worth of scope and became the milestone the rest of Sprint 2 hangs off. `ATaeInteractableSpawner` exists but has no `BP_Chest` or `BP_Pickup_Mana` behind it yet. |
+| **Day 9** — Audio & SFX | ⏳ **Resequenced to M5** | The C++ side is done — `UTaeArcaneSubsystem` spawns the two music components and crossfades them on `SetArcaneActive`. Only asset import and assignment remain. There are still no sound assets in `Content/`. Candidate source files per cue are catalogued in [AudioAssets.md](AudioAssets.md). |
 
-### Setup
-- [ ] Enable `PoseSearch` plugin in `ThroughArcaneEyes.uproject`
-- [ ] Add `PoseSearch` to `Build.cs` public deps
+### Still owed from Sprint 1
 
-### Pose Databases
-- [ ] `PSD_Locomotion` — normal movement; heavy root-gait walk, idle sway, grounded feel
-- [ ] `PSD_ArcaneReach` — Arcane mode; root-reach/extend poses, slow deliberate movement, no hard foot plant
+Small deferrals that never blocked anything and are still open:
 
-### C++
-- [ ] `ATaeCharacter` — expose `bArcaneActive` for the Animation Blueprint (via ASC tag query)
-- [ ] Tune `UCharacterMovementComponent` for Arcane mode — reduced gravity scale, increased air control, lower max walk speed; applied/removed by `UGA_SpectralShift`
-
-### Editor
-- [ ] `ABP_Hero` Animation Blueprint — Motion Matching node selecting between `PSD_Locomotion` and `PSD_ArcaneReach` based on `bArcaneActive`
-- [ ] Blend time between databases (suggested: 0.3–0.5s) to avoid snapping on toggle
-- [ ] Assign `ABP_Hero` to `BP_Hero` skeletal mesh
-- [ ] `S_Footstep_Root` — heavy root footstep set (4–6 variations); played via `AnimNotify_PlaySound` in `ABP_Hero`
-
----
-
-## Day 7 — Level Dressing & Clutter
-
-**Goal:** Replace procedural grid-cube islands with hand-placed rock/ruin set dressing, plus a randomised small-prop scatter system for clutter. Full proposal in [docs/LevelGeneration.md](LevelGeneration.md).
-
-> Retires `ATaeGridManager`, `FTaeIslandArchetype`, `DT_IslandArchetypes`, and the `DecayFactor` roll from the earlier procedural plan. `ATaeGridCube`'s reveal pattern survives — reused by `ATaeRootPath` in Day 8.
-
-- [ ] Hand-place island set dressing — `BP_Rock_*`, `BP_Ruin_*` static meshes arranged manually per island in the level (no spawner code)
-- [ ] `ATaeClutterScatter` — Actor with bounds (box/spline) + mesh pool (small rocks, wire piles, scrap); scatters N instances via `UInstancedStaticMeshComponent` on construction; per-instance `FRandomStream` seed for reproducible placement; optional ground-snap via line trace
-- [ ] `BP_ClutterScatter_Rocks`, `BP_ClutterScatter_Wires` — placed per island, density/seed tuned per instance
-
-## Day 8 — Interactables & Connections
-
-**Goal:** Chests and pickups spawn semi-randomly at designer-placed markers. Top-level manager tracks the hidden root-paths between islands, revealed by Arcane Vision (mechanic unchanged from the original proposal).
-
-- [ ] `ATaeInteractableSpawnPoint` — lightweight marker actor; designer places more per island than the number that will actually spawn
-- [ ] `ATaeInteractableSpawner` — collects all spawn points at `BeginPlay`; rolls `SpawnChance` per point (`FRandomStream`); picks a random interactable class from a weighted pool (`FTaeInteractableEntry { Class, Weight }`) for each point that hits
-- [ ] `BP_Chest`, `BP_Pickup_Mana` — interactable Blueprints
-- [ ] `ATaeWorldManager` — one per level; holds references to `ATaeRootPath` actors (hidden root connections between islands)
-- [ ] `ATaeRootPath` — spline-based actor representing one hidden root connection; placed by a designer; hidden by default (visibility + collision off), revealed via `UTaeStateComponent` listening for `Arcane.Vision` (same reveal pattern as `ATaeGridCube`)
-
----
-
-## Day 9 — Audio & SFX
-
-**Goal:** Full audio pass — UI clicks, spectral shift whooshes, portal ambience, grid reveal chime, ambient music, victory sting.
-
-> Import assets as `.wav`; wire via `UGameplayStatics::PlaySound2D` or `UAudioComponent`. No custom audio C++ needed.
-> Music crossfade C++ (`UTaeArcaneSubsystem`) is already wired — only asset assignment remains.
-> Candidate source files for each cue: see [docs/AudioAssets.md](AudioAssets.md).
-
-### UI Sounds
-- [ ] `S_UI_Click` — button hover/confirm SFX; bound to widget events in `WBP_MainMenu` / `WBP_PauseMenu`
-
-### Spectral SFX
-- [ ] `S_SpectralShift_On` + `S_SpectralShift_Off` — magical whoosh on toggle; played in `UGA_SpectralShift`
-- [ ] `S_GridReveal` — crystalline chime when hidden cubes materialise; played in `BP_GridCube` on state change
-
-### Portal & Win
-- [ ] `S_Portal_Ambience` — dimensional hum loop; `UAudioComponent` on `BP_Portal`
-- [ ] `S_Victory` — short magical flourish triggered on win condition
-
-### Music
-- [ ] `Music_Forest` — mysterious ambient loop (normal mode); assign in `BP_TaeGameInstance`
-- [ ] `Music_Arcane` — ethereal loop (Arcane mode); assign in `BP_TaeGameInstance`; crossfades via `UTaeArcaneSubsystem::SetArcaneActive`
+- [ ] `ATaePortal` render-to-texture — `USceneCaptureComponent2D` + `UTextureRenderTarget2D`, and `M_Portal` to sample it
+- [ ] `M_GridCube_Forest` texture upgrade — replace Voronoi with tiling rust and moss textures plus normal maps
+- [ ] Grid mesh collision — placeholder meshes are complex shapes; add box or convex collision once final assets land

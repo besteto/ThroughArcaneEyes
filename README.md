@@ -3,7 +3,7 @@
 ![Unreal Engine 5.8](https://img.shields.io/badge/Unreal%20Engine-5.8-0E1128?logo=unrealengine&logoColor=white)
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=cplusplus&logoColor=white)
 ![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)
-![Tests: 11 automation](https://img.shields.io/badge/Tests-11%20automation-brightgreen)
+![Tests: 9 automation](https://img.shields.io/badge/Tests-9%20automation-brightgreen)
 ![Code: Apache 2.0](https://img.shields.io/badge/Code-Apache%202.0-D22128)
 ![Content: All Rights Reserved](https://img.shields.io/badge/Content-All%20Rights%20Reserved-lightgrey)
 
@@ -18,7 +18,7 @@ You play as **Ant** — a humanoid living tree, roots for legs and branches for 
 * Rendering: Post-Process Materials, Global Distance Fields, Stencil Buffers, Substrate Materials
 * Gameplay: GAS (Gameplay Ability System) — Arcane toggle, root-growth channel, Mana attribute, Gameplay Tags
 * Camera: Close over-the-shoulder third-person, blending to a pulled-back Arcane framing (`GameplayCameras`)
-* Animation: Control Rig procedural tree motion — root drift, trunk bend, Arcane reach *(planned, M2)*
+* Animation: Control Rig procedural tree motion — root drift, trunk bend, Arcane reach *(planned, M5)*
 * World Gen: Hand-authored islands with PCG-generated detail and scatter *(planned, M4)*
 * Testing: UE Automation Tests — pure game logic covered headlessly
 * Workflow: Git, GitHub Actions for CI/CD *(planned)*, Obsidian (Knowledge Management)
@@ -32,9 +32,9 @@ You play as **Ant** — a humanoid living tree, roots for legs and branches for 
 
 ## 1. Modular Input Handling
 To demonstrate clean separation of concerns, the input is split into three layers:
-* Base Layer: Standard locomotion (WASD/Mouse).
-* Arcane Layer: Pushed/Popped dynamically from the LocalPlayerSubsystem when the "Arcane Eyes" mode is active.
-* Logic: Handled via UInputConfig Data Assets to avoid hardcoded string lookups in C++.
+* Base Layer: Standard locomotion (WASD/Mouse), pushed by `ATaePlayerController::BeginPlay`.
+* Arcane Layer: `IMC_Arcane` is pushed and popped on the `EnhancedInputLocalPlayerSubsystem` by `UGA_SpectralShift` itself — so the context's lifetime is exactly the ability's, and no code has to remember to clean it up.
+* Logic: All input lives in the controller, never in the character. Actions are typed `TObjectPtr<UInputAction>` properties validated by `IsDataValid`, so a missing binding surfaces as an editor error rather than a silent runtime no-op.
 
 ## 2. Reactive UI (MVVM)
 The HUD does not use Tick or standard Event Construct binding.
@@ -60,10 +60,12 @@ A single `ArcaneBlendAlpha` on `UTaeArcaneSubsystem` drives the post-process wei
 ## 5. The Restoration Economy
 Two resources, two verbs — **Look** and **Plant**.
 
-* **Mana** fuels both seeing and growing, and regenerates only near land you have already restored. It is the pressure that gives Forest mode a purpose.
-* **Saplings** are not currency. Each is a specific living thing you found, revealed only through Arcane Vision, and it gates *where* you can grow rather than how much.
+* **Mana** fuels both seeing and growing, and regenerates only near land you have already restored. It is the pressure that gives Forest mode a purpose. *(Shipped in M2.)*
+* **Saplings** are not currency. Each is a specific living thing you found, revealed only through Arcane Vision, and it gates *where* you can grow rather than how much. *(Planned, M3.)*
 
-Completing a connection re-runs that region's PCG graph: vegetation spawns, rust recedes, and new saplings appear where there was nothing. **You never farm — you heal, and healing produces.** The world you restore is what pays for restoring more of it.
+Mana is one attribute with three flows — vision drain, growth drain, and grove regen — all of them periodic Gameplay Effects that carry their rate through a `SetByCaller`, so designers tune in units per second while GAS receives the per-period magnitude it actually applies. Running dry grants `Arcane.Exhausted`, which ejects you from Arcane Vision and will not let you back in until mana climbs past a 25% recovery floor. The hysteresis is the point: without it you flicker in and out of vision at the bottom of the bar.
+
+Completing a connection re-runs that region's PCG graph: vegetation spawns, rust recedes, and new saplings appear where there was nothing. **You never farm — you heal, and healing produces.** The world you restore is what pays for restoring more of it. *(Planned, M4.)*
 
 Full design in the **[restoration economy spec](docs/superpowers/specs/2026-08-11-restoration-economy-design.md)**.
 
@@ -88,7 +90,7 @@ recordable demo rather than a calendar. Full design in
 | Milestone | Focus | Status |
 |-----------|-------|--------|
 | M1 | Connection Loop Playable | ✅ Done |
-| M2 | Mana Has Teeth — resource economy, GAS effects | ⬜ Not started |
+| M2 | Mana Has Teeth — resource economy, GAS effects | ✅ Done |
 | M3 | Arcane As A Sense — Slate overlay + sapling reveal | ⬜ Not started |
 | M4 | The World Heals — PCG restoration | ⬜ Not started |
 | M5 | Progression & Polish — win state, save, audio, Control Rig | ⬜ Not started |
@@ -96,18 +98,30 @@ recordable demo rather than a calendar. Full design in
 **M1 gate:** reveal a broken root in Arcane Vision, channel it to half growth, release, return, finish
 it, then walk across it in normal mode — verified in-editor.
 
+**M2 gate:** a ten-row PIE table over the whole economy — vision drain, growth drain, grove regen,
+exhaustion entry, and recovery past the 25% floor — verified in-editor. Balance tuning and the demo
+clip are deliberately sequenced *after* the visual pass: how an economy reads depends on what the
+world looks like while you spend it.
+
+Detailed status, including what became of the retired Day 6–9 plan, is in
+**[docs/Roadmap.md](docs/Roadmap.md)**.
+
 # 📚 Docs
 
 | File | Contents |
 |------|----------|
 | [docs/superpowers/specs/2026-08-11-restoration-economy-design.md](docs/superpowers/specs/2026-08-11-restoration-economy-design.md) | **Current design authority.** Resource economy, core loop, and the M2–M5 sequencing |
 | [docs/superpowers/specs/2026-08-10-connection-loop-design.md](docs/superpowers/specs/2026-08-10-connection-loop-design.md) | Connection loop and growth mechanic — still authoritative for M1; its milestone ordering is superseded |
+| [docs/superpowers/specs/2026-08-11-m2-mana-economy-design.md](docs/superpowers/specs/2026-08-11-m2-mana-economy-design.md) | M2 design: the mana attribute, the three flows, exhaustion hysteresis, the grove |
 | [docs/superpowers/plans/2026-08-10-m1-connection-loop.md](docs/superpowers/plans/2026-08-10-m1-connection-loop.md) | M1 implementation plan, with corrections applied during execution |
-| [docs/Roadmap.md](docs/Roadmap.md) | Sprint 1 record + per-day checklists *(Days 6–9 superseded by the spec)* |
-| [docs/LevelGeneration.md](docs/LevelGeneration.md) | Level dressing design: `ATaeClutterScatter`, interactable spawners *(island approach superseded by the spec's hybrid PCG)* |
-| [docs/Architecture.md](docs/Architecture.md) | Class hierarchy, module deps, data-flow diagrams |
+| [docs/superpowers/plans/2026-08-11-m2-mana-economy.md](docs/superpowers/plans/2026-08-11-m2-mana-economy.md) | M2 implementation plan — 12 tasks, TDD throughout |
+| [docs/Architecture.md](docs/Architecture.md) | **Start here for the code.** Class hierarchy, tags, module deps, data-flow diagrams, testing strategy |
+| [docs/Roadmap.md](docs/Roadmap.md) | Sprint 1 build log + milestone status *(Days 6–9 retired — the doc records what became of each)* |
 | [docs/SpectralVision.md](docs/SpectralVision.md) | Spectral Shift system: GameplayTags, StateComponent, Post-Process pipeline |
 | [docs/UIArchitecture.md](docs/UIArchitecture.md) | MVVM ViewModel, Common UI stack, widget conventions |
+| [docs/LevelGeneration.md](docs/LevelGeneration.md) | Level dressing design: `ATaeClutterScatter`, interactable spawners *(island approach superseded by the spec's hybrid PCG)* |
+| [docs/VisualAssets.md](docs/VisualAssets.md) | Sourcing pass for rock/ruin/clutter meshes, with per-pack licence notes |
+| [docs/AudioAssets.md](docs/AudioAssets.md) | Candidate source files per sound cue |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Commit format, code style, naming conventions |
 | [AGENTS.md](AGENTS.md) | Guide for AI agents working in this codebase |
 
