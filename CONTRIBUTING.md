@@ -27,6 +27,7 @@
 | `[Input]` | IMC, IA assets, Enhanced Input |
 | `[GAS]` | Abilities, AttributeSets, Gameplay Tags |
 | `[UI]` | HUD, Widgets, MVVM |
+| `[World]` | Islands, roots, grove, world actors and their VFX |
 | `[Rendering]` | Materials, Post-Process, Substrate |
 | `[Grid]` | GridCube, GridManager |
 | `[Animation]` | ABP, Motion Matching, Pose Databases |
