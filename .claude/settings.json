@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(tasklist*)"
+    ],
+    "deny": [
+      "Read(./Binaries/**)",
+      "Read(./Intermediate/**)",
+      "Read(./DerivedDataCache/**)",
+      "Read(./Content/**/*.uasset)",
+      "Read(./Content/**/*.umap)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-binary-assets.js\""
+          }
+        ]
+      }
+    ]
+  }
+}

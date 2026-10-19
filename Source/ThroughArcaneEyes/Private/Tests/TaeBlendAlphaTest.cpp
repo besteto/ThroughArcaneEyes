@@ -8,7 +8,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeBlendAlphaTest,
 	"ThroughArcaneEyes.Core.BlendAlpha",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeBlendAlphaTest::RunTest(const FString& Parameters)
 {

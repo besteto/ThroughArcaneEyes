@@ -8,7 +8,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeManaFlowTest,
 	"ThroughArcaneEyes.UI.ManaFlow",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeManaFlowTest::RunTest(const FString& Parameters)
 {

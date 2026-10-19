@@ -27,6 +27,7 @@
 | `[Input]` | IMC, IA assets, Enhanced Input |
 | `[GAS]` | Abilities, AttributeSets, Gameplay Tags |
 | `[UI]` | HUD, Widgets, MVVM |
+| `[World]` | Islands, roots, grove, world actors and their VFX |
 | `[Rendering]` | Materials, Post-Process, Substrate |
 | `[Grid]` | GridCube, GridManager |
 | `[Animation]` | ABP, Motion Matching, Pose Databases |
@@ -99,6 +100,22 @@ Use `Warning` for null-guards on BP-assigned properties. Do not log normal flow.
 2. Source → `Source/ThroughArcaneEyes/Private/<Domain>/TaeFoo.cpp`
 3. `"<Domain>/TaeFoo.generated.h"` must be the **last** include in the header
 4. Declare with `THROUGHARCANEEYES_API`
+
+---
+
+## Input Mapping
+
+IMC modifier conventions:
+
+| Input source | Action | Modifiers |
+|---|---|---|
+| W | Move | Swizzle (YXZ) |
+| S | Move | Swizzle (YXZ) → Negate |
+| A | Move | Negate |
+| D | Move | *(none)* |
+| Mouse XY 2D-Axis | Look | *(none)* |
+| Gamepad Left Thumbstick 2D-Axis | Move | Dead Zone (Axial, 0.2) |
+| Gamepad Right Thumbstick 2D-Axis | Look | Dead Zone (Axial, 0.2) → Scalar (2.5, 2.5) |
 
 ---
 

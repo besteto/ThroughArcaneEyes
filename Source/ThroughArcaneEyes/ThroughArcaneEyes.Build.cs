@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright © 2026 Helen Allien Poe. See LICENSE.
 
 using UnrealBuildTool;
 
@@ -16,6 +16,9 @@ public class ThroughArcaneEyes : ModuleRules
 
 		// UI
 		PublicDependencyModuleNames.AddRange(new string[] { "UMG", "CommonUI", "ModelViewViewModel" });
+
+		// VFX
+		PublicDependencyModuleNames.AddRange(new string[] { "Niagara" });
 
 		// GAS
 		PublicDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "GameplayTags", "GameplayTasks" });

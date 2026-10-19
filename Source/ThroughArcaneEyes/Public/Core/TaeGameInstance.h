@@ -8,6 +8,8 @@
 
 class UTaeHudViewModel;
 class USoundBase;
+class UTaeArcanePalette;
+class UMaterialParameterCollection;
 
 UCLASS()
 class THROUGHARCANEEYES_API UTaeGameInstance : public UGameInstance
@@ -30,6 +32,9 @@ public:
 	USoundBase* GetArcaneMusic() const { return Music_Arcane; }
 	float GetMusicCrossfadeDuration() const { return MusicCrossfadeDuration; }
 
+	UTaeArcanePalette* GetArcanePalette() const { return ArcanePalette; }
+	UMaterialParameterCollection* GetArcaneCollection() const { return ArcaneCollection; }
+
 protected:
 	// Assign Music_Forest in BP_TaeGameInstance
 	UPROPERTY(EditDefaultsOnly, Category = "Tae|Audio")
@@ -41,6 +46,15 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Tae|Audio")
 	float MusicCrossfadeDuration = 1.5f;
+
+	// Assign DA_ArcanePalette in BP_TaeGameInstance — the subsystem is a UWorldSubsystem and has no
+	// details panel of its own, same reason the music assets live here
+	UPROPERTY(EditDefaultsOnly, Category = "Tae|Arcane")
+	TObjectPtr<UTaeArcanePalette> ArcanePalette;
+
+	// Assign MPC_Arcane in BP_TaeGameInstance
+	UPROPERTY(EditDefaultsOnly, Category = "Tae|Arcane")
+	TObjectPtr<UMaterialParameterCollection> ArcaneCollection;
 
 private:
 	UPROPERTY()

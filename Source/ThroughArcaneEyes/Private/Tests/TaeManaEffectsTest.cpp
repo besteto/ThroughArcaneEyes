@@ -8,7 +8,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeManaEffectsTest,
 	"ThroughArcaneEyes.GAS.ManaEffects",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeManaEffectsTest::RunTest(const FString& Parameters)
 {

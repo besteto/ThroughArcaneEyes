@@ -8,7 +8,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeGrowthStepTest,
 	"ThroughArcaneEyes.World.GrowthStep",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeGrowthStepTest::RunTest(const FString& Parameters)
 {

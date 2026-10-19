@@ -8,7 +8,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeManaExhaustionTest,
 	"ThroughArcaneEyes.GAS.ManaExhaustion",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeManaExhaustionTest::RunTest(const FString& Parameters)
 {
