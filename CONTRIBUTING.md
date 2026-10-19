@@ -103,6 +103,22 @@ Use `Warning` for null-guards on BP-assigned properties. Do not log normal flow.
 
 ---
 
+## Input Mapping
+
+IMC modifier conventions:
+
+| Input source | Action | Modifiers |
+|---|---|---|
+| W | Move | Swizzle (YXZ) |
+| S | Move | Swizzle (YXZ) → Negate |
+| A | Move | Negate |
+| D | Move | *(none)* |
+| Mouse XY 2D-Axis | Look | *(none)* |
+| Gamepad Left Thumbstick 2D-Axis | Move | Dead Zone (Axial, 0.2) |
+| Gamepad Right Thumbstick 2D-Axis | Look | Dead Zone (Axial, 0.2) → Scalar (2.5, 2.5) |
+
+---
+
 ## Docs
 
 | File | Update when |

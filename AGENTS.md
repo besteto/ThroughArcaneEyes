@@ -6,8 +6,6 @@ Guidance for AI agents working in this UE 5.8 third-person (over-the-shoulder) r
 > Specs and plans per milestone: [docs/superpowers/](docs/superpowers/) · Engine pitfalls already paid for: [docs/EngineGotchas.md](docs/EngineGotchas.md)
 > Code style and full commit tag vocabulary: [CONTRIBUTING.md](CONTRIBUTING.md)
 
----
-
 ## Module Architecture
 
 Single game module: `ThroughArcaneEyes` (Runtime, `UseExplicitOrSharedPCHs`).
@@ -22,9 +20,9 @@ Single game module: `ThroughArcaneEyes` (Runtime, `UseExplicitOrSharedPCHs`).
 
 No custom plugins. Engine plugins enabled in the `.uproject`: `ModelingToolsEditorMode`, `CommonUI`, `ModelViewViewModel` (+ `Preview`), `GameplayAbilities`, `GameplayCameras`, `PythonScriptPlugin` (editor asset scripting in `Tools/Python/`).
 
-Targets: `ThroughArcaneEyes.Target.cs` (Game) and `ThroughArcaneEyesEditor.Target.cs` (Editor), both `BuildSettingsVersion.V7` / `IncludeOrderVersion.Unreal5_8`.
+Maturity in 5.8: GAS, CommonUI, Enhanced Input, Niagara are production. **MVVM is Beta.** **GameplayCameras is Experimental (v0.1)** and no C++ uses it yet — the live camera is SpringArm + `UCameraComponent`; keep that as the fallback.
 
----
+Targets: `ThroughArcaneEyes.Target.cs` (Game) and `ThroughArcaneEyesEditor.Target.cs` (Editor), both `BuildSettingsVersion.V7` / `IncludeOrderVersion.Unreal5_8`.
 
 ## Naming Conventions
 
@@ -44,24 +42,9 @@ Source mirrors header layout: `Public/<Domain>/TaeX.h` → `Private/<Domain>/Tae
 
 Current domains: `Core/`, `Character/`, `UI/`, `GAS/`, `Components/`, `World/`. Tests live in `Private/Tests/` (see Build & Test). `Data/CharacterInfo.h` is a dead stub — don't build on it.
 
----
-
 ## Memory Management & Macros
 
-Always use `TObjectPtr<T>` for `UPROPERTY` members — never raw `T*`:
-
-```cpp
-// Correct
-UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
-TObjectPtr<UCameraComponent> FollowCamera;
-
-// Wrong
-UCameraComponent* FollowCamera;
-```
-
-Forward-declare in headers, include in `.cpp`. Full specifier guide in [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
+Always use `TObjectPtr<T>` for `UPROPERTY` members — never raw `T*`. Forward-declare in headers, include in `.cpp`. Full specifier guide in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Enhanced Input
 
@@ -83,21 +66,9 @@ Actions are `EditAnywhere TObjectPtr<UInputAction>` properties on the controller
 
 Mapping context registered in `BeginPlay` via `UEnhancedInputLocalPlayerSubsystem`. `OwnerCharacter` is cached in `SetPawn()` as a `Transient TObjectPtr<ATaeCharacter>` and null-checked before use. `SetPawn()` also wires the ASC to the HUD viewmodel.
 
-**IMC modifier conventions:**
-
-| Input source | Action | Modifiers |
-|---|---|---|
-| W | Move | Swizzle (YXZ) |
-| S | Move | Swizzle (YXZ) → Negate |
-| A | Move | Negate |
-| D | Move | *(none)* |
-| Mouse XY 2D-Axis | Look | *(none)* |
-| Gamepad Left Thumbstick 2D-Axis | Move | Dead Zone (Axial, 0.2) |
-| Gamepad Right Thumbstick 2D-Axis | Look | Dead Zone (Axial, 0.2) → Scalar (2.5, 2.5) |
+IMC modifier conventions are in [CONTRIBUTING.md](CONTRIBUTING.md#input-mapping). Avoid `UInputTriggerCombo` (deprecated 5.8) and `UInputMappingContext::Mappings` (use `DefaultKeyMappings`).
 
 When adding new input: create a `UInputAction` asset, add it as an `EditAnywhere` property, bind in `SetupInputComponent`, and add an `IsDataValid` error for it (see Editor Validation).
-
----
 
 ## Blueprint / C++ Interaction
 
@@ -114,16 +85,12 @@ Delegates use `DECLARE_DYNAMIC_MULTICAST_DELEGATE_*` + `BlueprintAssignable`: `F
 
 **Niagara hooks:** C++ owns the `UNiagaraComponent` and pushes user parameters; the `NS_` asset is authored by hand. Parameter names are declared as constants in the owning header (`TaeGroveParams` in `TaeGroveComponent.h`, `TaeRootParams` in `TaeRootPath.h`) — keep the asset's user parameters identical. Colours come from `UTaeArcanePalette` → `MPC_Arcane` (mirrored to Niagara via `NPC_Arcane`), never hardcoded.
 
----
-
 ## Camera
 
 `ATaeCharacter` uses a close over-the-shoulder third-person camera:
 - `SpringArm` (`USpringArmComponent`) attached to root; `TargetArmLength = 80`, `SocketOffset = (0, 50, 20)`, `bUsePawnControlRotation = true`
 - `FollowCamera` (`UCameraComponent`) attached to `SpringArm` socket; `bUsePawnControlRotation = false`
 - Defaults are set in C++; fine-tune in `BP_TaeCharacter` Details
-
----
 
 ## GameMode / Framework Wiring
 
@@ -132,8 +99,6 @@ Delegates use `DECLARE_DYNAMIC_MULTICAST_DELEGATE_*` + `BlueprintAssignable`: `F
 All four class slots (`GameStateClass`, `HUDClass`, `DefaultPawnClass`, `PlayerControllerClass`) are set in **`BP_TaeGameMode` Class Defaults**, not in C++.
 
 `DefaultEngine.ini` `[GameMapsSettings]` points `GlobalDefaultGameMode` to `BP_TaeGameMode_C` and `GameInstanceClass` to `/Game/Core/BP_TaeGameInstance.BP_TaeGameInstance_C`. If that path is wrong UE **silently** falls back to `UGameInstance` — check the log.
-
----
 
 ## GAS Conventions
 
@@ -154,13 +119,9 @@ All four class slots (`GameStateClass`, `HUDClass`, `DefaultPawnClass`, `PlayerC
 
 **`UTaeStateComponent`:** add to any actor that needs to react to `Arcane.Vision`. It registers the tag event in `BeginPlay` and broadcasts `OnArcaneStateChanged(bool)`.
 
----
-
 ## Editor Validation
 
 Prefer `IsDataValid` (guarded by `#if WITH_EDITOR`) over runtime `UE_LOG` null-guards for BP-assigned properties. Include `Misc/DataValidation.h` in the `.cpp`. Use `Context.AddError` (not `AddWarning`) for properties that make the class non-functional when unset. Early-out with `if (IsTemplate())` so Blueprint templates aren't validated.
-
----
 
 ## Copyright & License
 
@@ -169,8 +130,6 @@ All source files use:
 // Copyright © 2026 Helen Allien Poe. See LICENSE.
 ```
 Dual licensed: code (`Source/`, `Tools/`, `Config/`, build files) is Apache 2.0 ([LICENSE](LICENSE)); `Content/` and the game's name, story and art are All Rights Reserved ([LICENSE-CONTENT.md](LICENSE-CONTENT.md)). The Fab Stickman asset is not tracked — never commit it.
-
----
 
 ## Logging
 
@@ -181,8 +140,6 @@ Use `LogTae` (never `LogTemp`). `Warning` for null-guards only — no flow loggi
 UE_LOG(LogTae, Warning, TEXT("[PC] SomeProperty is NULL — assign it in BP_X"));
 ```
 
----
-
 ## Commit Format
 
 ```
@@ -192,8 +149,6 @@ UE_LOG(LogTae, Warning, TEXT("[PC] SomeProperty is NULL — assign it in BP_X"))
 Sigils: `[+]` add · `[-]` remove · `[*]` fix/tweak
 Tags: `[Core]` `[Character]` `[Input]` `[GAS]` `[UI]` `[World]` `[Rendering]` `[Grid]` `[Animation]` `[Docs]` `[Config]` `[Meta]`
 Full vocabulary in [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
 
 ## Build & Test
 
@@ -213,19 +168,17 @@ Close the editor first — UBT refuses to build while Live Coding is active, and
 & 'D:\EpicGames\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' "D:\PetProjects\ThroughArcaneEyes\ThroughArcaneEyes.uproject" -run=pythonscript -script="<Tools/Python/script.py>" -unattended -nopause -nosplash
 ```
 
-Prefer the headless boot over asking the user to PIE when checking runtime wiring. Tests use `IMPLEMENT_SIMPLE_AUTOMATION_TEST`; tests needing a world share `Private/Tests/TaeTestWorld.h`.
+Claude Code wraps these as the `/compile`, `/test` and `/boot` skills in `.claude/skills/`. Prefer the headless boot over asking the user to PIE when checking runtime wiring. Tests use `IMPLEMENT_SIMPLE_AUTOMATION_TEST` with `EditorContext | ProductFilter`; tests needing a world share `Private/Tests/TaeTestWorld.h`. CQTest (`TEST_CLASS`) is available if fixtures get heavier.
+
+Unity builds can hide missing includes — before merging a branch, build once with `-DisableUnity` appended to the Build.bat line.
 
 After adding a new `.h`/`.cpp` pair, regenerate project files (*Tools → Refresh Visual Studio Project* or Rider equivalent).
-
----
 
 ## Workflow
 
 - Milestone work follows spec → plan → implementation in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 - Manual editor steps go in a handoff note in `docs/issues/` (gitignored scratch between user and agent); promote anything worth keeping into `docs/superpowers/`.
 - `docs/ideas/` holds the user's own notes — don't commit them.
-
----
 
 ## Adding New Classes
 
