@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Helen Allien Poe. See LICENSE.
-"""Creates the arcane presentation assets: MPC_Arcane and DA_ArcanePalette.
+"""Creates the arcane presentation assets: MPC_Arcane, NPC_Arcane and DA_ArcanePalette.
 
 Run headless:
   UnrealEditor-Cmd.exe <project>.uproject -run=pythonscript -script="<this file>" -unattended -nopause -nosplash
@@ -10,6 +10,10 @@ a name the collection does not declare, so a mismatch surfaces as ApplyPaletteTo
 returning fewer than 4 and a "[Arcane] No palette colours written" warning in the log.
 
 Idempotent: safe to run more than once. Every asset is checked for existence before creation.
+
+NPC_Arcane is the Niagara side of the palette: SourceMaterialCollection = MPC_Arcane makes Niagara
+mirror every MPC vector as a Color, read in systems as NPC.Arcane.<Name>. Setting the property via
+set_editor_property fires PostEditChangeProperty, which is what pulls the MPC parameters across.
 
 Niagara systems are deliberately NOT here. Emitter graphs are not exposed to Python, so a scripted
 NS_ asset would be an empty shell rather than a starting point. NS_GroveBloom and NS_GrowthFront
@@ -60,6 +64,24 @@ def make_parameter_collection():
     return collection
 
 
+def make_niagara_collection(source):
+    full = "{}/{}".format(MATERIALS_PATH, "NPC_Arcane")
+    if unreal.EditorAssetLibrary.does_asset_exist(full):
+        unreal.log("exists, skipping: {}".format(full))
+        return unreal.EditorAssetLibrary.load_asset(full)
+
+    factory = unreal.NiagaraParameterCollectionFactoryNew()
+    collection = assets.create_asset(
+        "NPC_Arcane", MATERIALS_PATH, unreal.NiagaraParameterCollection, factory)
+
+    # Namespace before source, so the mirrored parameters land under NPC.Arcane.*
+    collection.set_editor_property("namespace", "Arcane")
+    collection.set_editor_property("source_material_collection", source)
+    unreal.EditorAssetLibrary.save_asset(full)
+    unreal.log("created: {} mirroring {}".format(full, source.get_name()))
+    return collection
+
+
 def make_palette():
     full = "{}/{}".format(CORE_PATH, "DA_ArcanePalette")
     if unreal.EditorAssetLibrary.does_asset_exist(full):
@@ -78,7 +100,8 @@ def make_palette():
 
 
 def main():
-    make_parameter_collection()
+    mpc = make_parameter_collection()
+    make_niagara_collection(mpc)
     make_palette()
     unreal.log("arcane presentation assets done")
 
