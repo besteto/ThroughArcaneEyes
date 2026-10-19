@@ -9,7 +9,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeGroveRegenTest,
 	"ThroughArcaneEyes.World.GroveRegen",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeGroveRegenTest::RunTest(const FString& Parameters)
 {

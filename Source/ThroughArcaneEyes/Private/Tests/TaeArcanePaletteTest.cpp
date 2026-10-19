@@ -40,7 +40,7 @@ namespace
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeArcanePaletteTest,
 	"ThroughArcaneEyes.Core.ArcanePalette",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeArcanePaletteTest::RunTest(const FString& Parameters)
 {

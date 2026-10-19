@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright © 2026 Helen Allien Poe. See LICENSE.
 
 using UnrealBuildTool;
 

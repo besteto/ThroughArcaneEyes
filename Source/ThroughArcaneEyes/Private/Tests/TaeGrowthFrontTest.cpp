@@ -8,7 +8,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeGrowthFrontTest,
 	"ThroughArcaneEyes.World.GrowthFront",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeGrowthFrontTest::RunTest(const FString& Parameters)
 {

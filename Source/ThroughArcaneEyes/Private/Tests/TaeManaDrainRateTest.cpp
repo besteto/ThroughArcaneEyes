@@ -63,7 +63,7 @@ namespace TaeDrainTest
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeManaDrainRateTest,
 	"ThroughArcaneEyes.GAS.ManaDrainRate",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeManaDrainRateTest::RunTest(const FString& Parameters)
 {
@@ -99,7 +99,7 @@ bool FTaeManaDrainRateTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeManaDrainStackingTest,
 	"ThroughArcaneEyes.GAS.ManaDrainStacking",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeManaDrainStackingTest::RunTest(const FString& Parameters)
 {

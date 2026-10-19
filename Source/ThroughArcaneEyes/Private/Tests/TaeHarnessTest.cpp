@@ -7,7 +7,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FTaeHarnessTest,
 	"ThroughArcaneEyes.Harness.Sanity",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTaeHarnessTest::RunTest(const FString& Parameters)
 {
